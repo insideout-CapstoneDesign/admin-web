@@ -1,0 +1,44 @@
+:root {
+    /* Color */
+
+    /* Blue */
+    --blue-50: #eff6ff;
+    --blue-100: #dbeafe;
+    --blue-500: #2b7fff;
+    --blue-600: #155dfc;
+    --blue-900: #1c398e;
+
+    /* Green */
+    --green-500: #00c950;
+
+    /* Yellow */
+    --yellow-500: #fdc700;
+
+    /* Red */
+    --red-500: #fb2c36;
+
+    /* Gray */
+    --gray-200: #e5e7eb;
+    --gray-400: #99a1af;
+    --gray-500: #6a7282;
+    --gray-600: #4a5565;
+    --gray-700: #364153;
+
+    /* Black */
+    --black-1000: #000000;
+    --black-950: #0a0a0a;
+    --black-900: #101828;
+    /* white */
+    --white: #ffffff;
+    /* Font */
+    --font-family-main: 'Pretendard', sans-serif;
+
+    /* Layout - Web */
+    --web-max-width: 1440px;
+    --web-min-width: 1024px;
+
+    /* Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
