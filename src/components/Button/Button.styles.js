@@ -25,6 +25,12 @@ const variantStyles = {
     border: 1px solid var(--green-500);
   `,
 
+    curveComplete: css`
+    background: var(--green-500);
+    color: var(--white);
+    border: 1px solid var(--green-500);
+  `,
+
     danger: css`
     background: var(--red-500);
     color: var(--white);
@@ -35,6 +41,12 @@ const variantStyles = {
     background: var(--white);
     color: var(--red-500);
     border: 1px solid var(--red-500);
+  `,
+
+    routeReset: css`
+    background: var(--white);
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
   `,
 }
 const sizeStyles = {
