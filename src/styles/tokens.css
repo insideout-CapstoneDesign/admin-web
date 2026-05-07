@@ -41,4 +41,19 @@
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
+
+    /* Typography */
+    --font-sans: 'Pretendard', sans-serif;
+    --text-14: 14px;
+    --text-16: 16px;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+
+    /* Radius / Spacing */
+    --radius-8: 8px;
+    --radius-10: 10px;
+    --space-8: 8px;
+    --space-12: 12px;
+    --space-16: 16px;
 }
