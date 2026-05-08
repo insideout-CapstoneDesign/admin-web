@@ -1,6 +1,6 @@
 import './TextInput.css'
 
-export default function TextInput({ value, onChange, placeholder, ...props }) {
+export default function TextInput({ value = '', onChange, placeholder, ...props }) {
     return (
         <input
             className="text-input"

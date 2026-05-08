@@ -7,7 +7,7 @@ export default function DeletableTextBox({ text, onDelete = noop }) {
     return (
         <div className="deletable-text-box">
             <span className="deletable-text-box-text">{text}</span>
-            <Button variant="danger" size="sm" onClick={onDelete}>
+            <Button type="button" variant="danger" size="sm" onClick={onDelete}>
                 삭제
             </Button>
         </div>

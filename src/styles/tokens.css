@@ -31,7 +31,7 @@
     /* white */
     --white: #ffffff;
     /* Font */
-    --font-family-main: 'Pretendard', sans-serif;
+    --font-family-main: Pretendard, sans-serif;
 
     /* Layout - Web */
     --web-max-width: 1440px;
@@ -43,7 +43,7 @@
     --radius-lg: 20px;
 
     /* Typography */
-    --font-sans: 'Pretendard', sans-serif;
+    --font-sans: Pretendard, sans-serif;
     --text-14: 14px;
     --text-16: 16px;
     --fw-medium: 500;
