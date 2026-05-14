@@ -13,7 +13,7 @@ const Page = styled.div`
 /* ── Hero Section ── */
 const Hero = styled.section`
     width: 100%;
-    padding: 80px 32px 100px;
+    padding: 140px 32px 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
