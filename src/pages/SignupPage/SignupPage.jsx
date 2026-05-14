@@ -158,7 +158,7 @@ export default function SignupPage() {
         <Wrapper>
             <PageTitle>회원가입</PageTitle>
 
-            <Form onSubmit={handleSubmit(onSubmit)}>
+            <Form noValidate onSubmit={handleSubmit(onSubmit)}>
                 <FieldGroup>
                     <Label htmlFor="email">이메일</Label>
                     <Input
