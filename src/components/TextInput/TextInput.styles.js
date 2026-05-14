@@ -1,4 +1,6 @@
-.text-input {
+import styled from 'styled-components'
+
+export const StyledInput = styled.input`
     width: 100%;
     height: 54px;
     padding: 0 16px;
@@ -10,12 +12,12 @@
     font-size: var(--text-16);
     font-weight: var(--fw-medium);
     outline: none;
-}
 
-.text-input::placeholder {
-    color: var(--gray-400);
-}
+    &::placeholder {
+        color: var(--gray-400);
+    }
 
-.text-input:focus {
-    border-color: var(--blue-500);
-}
+    &:focus {
+        border-color: var(--blue-500);
+    }
+`

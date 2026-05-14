@@ -1,4 +1,11 @@
-import './ContainerBox.css'
+import {
+    Article,
+    Content,
+    Title,
+    SubText,
+    Actions,
+    IconButton,
+} from './ContainerBox.styles'
 
 const noop = () => {}
 
@@ -32,31 +39,29 @@ export default function ContainerBox({
                                          onDelete = noop,
                                      }) {
     return (
-        <article className={`container-box${selected ? ' is-selected' : ''}`}>
-            <div className="container-box-content">
-                <strong className="container-box-title">{title}</strong>
-                {description && <span className="container-box-description">{description}</span>}
-                {meta && <span className="container-box-meta">{meta}</span>}
-            </div>
+        <Article $selected={selected}>
+            <Content>
+                <Title>{title}</Title>
+                {description && <SubText>{description}</SubText>}
+                {meta && <SubText>{meta}</SubText>}
+            </Content>
 
-            <div className="container-box-actions">
-                <button
-                    className="container-box-icon-button is-edit"
-                    type="button"
+            <Actions>
+                <IconButton
+                    $color="var(--blue-500)"
                     aria-label="수정"
                     onClick={onEdit}
                 >
                     <PencilIcon />
-                </button>
-                <button
-                    className="container-box-icon-button is-delete"
-                    type="button"
+                </IconButton>
+                <IconButton
+                    $color="var(--red-500)"
                     aria-label="삭제"
                     onClick={onDelete}
                 >
                     <TrashIcon />
-                </button>
-            </div>
-        </article>
+                </IconButton>
+            </Actions>
+        </Article>
     )
 }
