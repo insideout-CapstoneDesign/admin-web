@@ -1,9 +1,8 @@
-import './TextInput.css'
+import { StyledInput } from './TextInput.styles'
 
 export default function TextInput({ value = '', onChange, placeholder, ...props }) {
     return (
-        <input
-            className="text-input"
+        <StyledInput
             value={value}
             onChange={(event) => onChange?.(event.target.value)}
             placeholder={placeholder}

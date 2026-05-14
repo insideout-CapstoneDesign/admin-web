@@ -1,4 +1,6 @@
-.container-box {
+import styled from 'styled-components'
+
+export const Article = styled.article`
     width: 100%;
     min-height: 56px;
     display: flex;
@@ -9,45 +11,45 @@
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-8);
     background-color: var(--white);
-}
 
-.container-box.is-selected {
-    min-height: 56px;
-    background-color: var(--blue-50);
-    border-color: var(--green-500);
-}
+    ${({ $selected }) =>
+        $selected &&
+        `
+        background-color: var(--blue-50);
+        border-color: var(--green-500);
+    `}
+`
 
-.container-box-content {
+export const Content = styled.div`
     min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 5px;
-}
+`
 
-.container-box-title {
+export const Title = styled.strong`
     color: var(--black-900);
     font-size: var(--text-16);
     font-weight: var(--fw-bold);
     line-height: 1.35;
-}
+`
 
-.container-box-description,
-.container-box-meta {
+export const SubText = styled.span`
     color: var(--gray-500);
     font-size: var(--text-14);
     font-weight: var(--fw-semibold);
     line-height: 1.35;
-}
+`
 
-.container-box-actions {
+export const Actions = styled.div`
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     gap: 10px;
-}
+`
 
-.container-box-icon-button {
+export const IconButton = styled.button.attrs({ type: 'button' })`
     width: 24px;
     height: 24px;
     display: inline-flex;
@@ -57,22 +59,15 @@
     border: 0;
     background: transparent;
     cursor: pointer;
-}
+    color: ${({ $color }) => $color || 'inherit'};
 
-.container-box-icon-button svg {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentcolor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.container-box-icon-button.is-edit {
-    color: var(--blue-500);
-}
-
-.container-box-icon-button.is-delete {
-    color: var(--red-500);
-}
+    svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentcolor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+`
