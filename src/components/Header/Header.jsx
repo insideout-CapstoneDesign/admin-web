@@ -10,6 +10,11 @@ const StyledHeader = styled.header`
     background-color: var(--white);
     border-bottom: 1px solid var(--gray-200);
     cursor: pointer;
+    
+    &:focus-visible {
+        outline: 2px solid var(--blue-500);
+        outline-offset: -2px;
+    }
 `
 
 const Logo = styled.img`
@@ -29,7 +34,17 @@ export default function Header() {
     const navigate = useNavigate()
 
     return (
-        <StyledHeader onClick={() => navigate('/')}>
+        <StyledHeader
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/')}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    navigate('/')
+                }
+            }}
+        >
             <Logo src="/logo.svg" alt="INSIDE OUT" />
             <Title>INSIDE OUT</Title>
         </StyledHeader>

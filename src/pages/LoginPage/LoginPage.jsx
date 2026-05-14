@@ -123,7 +123,7 @@ export default function LoginPage() {
     const handleSubmit = (e) => {
         e.preventDefault()
         // TODO: 로그인 API 연동
-        console.log('로그인 시도:', { email, password })
+        console.log('로그인 시도')
     }
 
     return (

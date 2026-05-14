@@ -1,7 +1,23 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import styled from 'styled-components'
 import Button from '../../components/Button/Button'
 import { useNavigate } from 'react-router-dom'
+
+const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/
+
+const signupSchema = z.object({
+    email: z.string().email('유효한 이메일 형식이 아닙니다.'),
+    password: z.string().regex(
+        passwordRegex,
+        '영문, 숫자, 특수문자를 포함하여 8자 이상 입력해주세요.'
+    ),
+    passwordConfirm: z.string(),
+}).refine((data) => data.password === data.passwordConfirm, {
+    message: '비밀번호가 일치하지 않습니다.',
+    path: ['passwordConfirm'],
+})
 
 const Wrapper = styled.div`
     width: 100%;
@@ -115,33 +131,44 @@ const LoginLink = styled.button`
     }
 `
 
+const ErrorMessage = styled.span`
+    color: var(--red-500, #ef4444);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    margin-top: 4px;
+`
+
 export default function SignupPage() {
     const navigate = useNavigate()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [passwordConfirm, setPasswordConfirm] = useState('')
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(signupSchema),
+        mode: 'onChange',
+    })
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
+    const onSubmit = (data) => {
         // TODO: 회원가입 API 연동
-        console.log('회원가입 시도:', { email, password, passwordConfirm })
+        console.log('회원가입 시도:', data)
     }
 
     return (
         <Wrapper>
             <PageTitle>회원가입</PageTitle>
 
-            <Form onSubmit={handleSubmit}>
+            <Form onSubmit={handleSubmit(onSubmit)}>
                 <FieldGroup>
                     <Label htmlFor="email">이메일</Label>
                     <Input
                         id="email"
                         type="email"
                         placeholder="이메일"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        {...register('email')}
                         autoComplete="email"
                     />
+                    {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
                 </FieldGroup>
 
                 <FieldGroup>
@@ -150,10 +177,10 @@ export default function SignupPage() {
                         id="password"
                         type="password"
                         placeholder="8자 이상 입력"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        {...register('password')}
                         autoComplete="new-password"
                     />
+                    {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
                 </FieldGroup>
 
                 <FieldGroup>
@@ -162,10 +189,10 @@ export default function SignupPage() {
                         id="password-confirm"
                         type="password"
                         placeholder="비밀번호 확인"
-                        value={passwordConfirm}
-                        onChange={(e) => setPasswordConfirm(e.target.value)}
+                        {...register('passwordConfirm')}
                         autoComplete="new-password"
                     />
+                    {errors.passwordConfirm && <ErrorMessage>{errors.passwordConfirm.message}</ErrorMessage>}
                 </FieldGroup>
 
                 <SubmitButton variant="primary" size="lg" type="submit">
