@@ -14,17 +14,17 @@ const PageWrapper = styled.div`
 
 const Container = styled.div`
     width: 100%;
-    max-width: 1200px;
+    max-width: 1520px;
     margin: 0 auto;
-    padding: 40px 32px;
+    padding: 32px 28px 40px;
 `
 
 /* ── Header ── */
 const HeaderArea = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-bottom: 32px;
+    gap: 12px;
+    margin-bottom: 24px;
 `
 
 const BackButton = styled.button`
@@ -49,7 +49,7 @@ const BackButton = styled.button`
 
 const Title = styled.h1`
     font-family: var(--font-sans);
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 800;
     color: var(--black-900);
     margin: 0;
@@ -60,7 +60,7 @@ const TabBar = styled.div`
     display: flex;
     gap: 32px;
     border-bottom: 1px solid var(--gray-200);
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 `
 
 const TabButton = styled.button`
@@ -149,6 +149,14 @@ const TableContainer = styled.div`
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-8);
     overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+`
+
+const MapPanel = styled.div`
+    background-color: var(--white);
+    padding: 20px;
+    border-radius: var(--radius-12);
+    border: 1px solid var(--gray-200);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
 `
 
@@ -314,9 +322,9 @@ export default function TenantDetailPage() {
                 )}
 
                 {activeTab === 'map' && (
-                    <div style={{ height: '600px', backgroundColor: 'var(--white)', padding: '24px', borderRadius: 'var(--radius-12)', border: '1px solid var(--gray-200)' }}>
-                        <FloorplanUploadView />
-                    </div>
+                    <MapPanel>
+                        <FloorplanUploadView floorName="캠퍼스 맵" />
+                    </MapPanel>
                 )}
             </Container>
 
