@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import styled from 'styled-components'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import Button from '../../components/Button/Button'
 import BuildingModal from '../../components/Modal/BuildingModal'
 import FloorplanUploadView from '../../components/Upload/FloorplanUploadView'
@@ -186,6 +186,22 @@ const Td = styled.td`
     border-bottom: 1px solid var(--gray-100);
 `
 
+const BuildingLink = styled(Link)`
+    color: inherit;
+    text-decoration: none;
+    font-weight: var(--fw-bold);
+
+    &:hover {
+        color: var(--blue-500);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--blue-500);
+        outline-offset: 3px;
+        border-radius: 4px;
+    }
+`
+
 const Tr = styled.tr`
     cursor: pointer;
     transition: background-color 0.2s;
@@ -229,6 +245,12 @@ const mockBuildings = [
     { id: 103, name: '중앙도서관', floors: 5, plans: 2 },
 ]
 
+const tenantNameById = {
+    1: '동국대학교',
+    2: '신세계백화점 본점',
+    3: '한양대학교',
+}
+
 export default function TenantDetailPage() {
     const { tenantId } = useParams()
     const navigate = useNavigate()
@@ -236,7 +258,7 @@ export default function TenantDetailPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
 
     // 실제로는 tenantId로 단지 정보를 조회함. 여기선 더미 처리
-    const tenantName = tenantId === '3' ? '한양대학교' : '동국대학교'
+    const tenantName = tenantNameById[tenantId] ?? '알 수 없는 단지'
 
     return (
         <PageWrapper>
@@ -298,8 +320,13 @@ export default function TenantDetailPage() {
                                 <tbody>
                                     {mockBuildings.map((item) => (
                                         <Tr key={item.id} onClick={() => navigate(`/building/${item.id}`)}>
-                                            <Td style={{ fontWeight: 'var(--fw-bold)', color: 'var(--black-900)' }}>
-                                                {item.name}
+                                            <Td style={{ color: 'var(--black-900)' }}>
+                                                <BuildingLink
+                                                    to={`/building/${item.id}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {item.name}
+                                                </BuildingLink>
                                             </Td>
                                             <Td>{item.floors}층</Td>
                                             <Td>{item.plans}개</Td>

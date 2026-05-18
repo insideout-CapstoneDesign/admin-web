@@ -221,7 +221,7 @@ export default function AddressSearchModal({ isOpen, onClose, onSelect }) {
             setHasSearched(true)
         } catch (error) {
             console.error('카카오 API 검색 중 오류 발생:', error)
-            alert(`장소 검색 중 오류가 발생했습니다.\n이유: ${error.message}`)
+            alert(`장소 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.`)
         }
     }
 

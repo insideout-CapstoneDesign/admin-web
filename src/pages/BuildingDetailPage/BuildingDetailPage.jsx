@@ -196,7 +196,7 @@ export default function BuildingDetailPage() {
 
     const submittedBuilding = location.state?.building
     const [floors] = useState(() => {
-        if (!submittedBuilding?.floors?.length) {
+        if (submittedBuilding?.floors == null) {
             return fallbackFloors
         }
 
@@ -206,7 +206,7 @@ export default function BuildingDetailPage() {
                 buildingId: submittedBuilding.id || buildingId || 'new-building',
                 level: floor.level,
                 name: formatFloorLabel(floor.level),
-                hasMap: Boolean(floor.floorplanId),
+                hasMap: floor.floorplanId != null,
                 floorId: floor.floorId,
                 floorplanId: floor.floorplanId,
             }))

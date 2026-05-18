@@ -361,9 +361,7 @@ const DetectionItem = styled.button`
 
 const DetectionItemTop = styled.div`
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 8px;
     margin-bottom: 8px;
 `
 
@@ -376,12 +374,6 @@ const DetectionPill = styled.span`
     color: ${({ $color }) => $color};
     font-size: 12px;
     font-weight: 700;
-`
-
-const Confidence = styled.span`
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--gray-500);
 `
 
 const DetectionName = styled.div`
@@ -736,7 +728,6 @@ export default function FloorplanUploadView({ floorName, floorplanId = null }) {
                                             <DetectionPill $bg={meta.bg} $color={meta.color}>
                                                 {meta.label}
                                             </DetectionPill>
-                                            <Confidence>{formatConfidence(detection.confidence)}</Confidence>
                                         </DetectionItemTop>
                                         <DetectionName>{detection.label || detection.ocrText || '이름 없음'}</DetectionName>
                                         <DetectionMeta>
