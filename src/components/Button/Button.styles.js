@@ -69,7 +69,7 @@ const sizeStyles = {
   `,
 }
 
-export const StyledButton = styled.button.attrs({ type: 'button' })`
+export const StyledButton = styled.button.attrs(props => ({ type: props.type || 'button' }))`
   display: inline-flex;
   justify-content: center;
   align-items: center;

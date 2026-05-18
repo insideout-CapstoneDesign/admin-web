@@ -22,3 +22,50 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ===== 환경 변수  =====
+.env
+.env.local
+.env.*.local
+
+# ===== 테스트 / 커버리지 =====
+coverage/
+.nyc_output/
+
+# ===== Lint / Format 캐시 =====
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# ===== TypeScript 증분 빌드 =====
+*.tsbuildinfo
+
+# ===== Vite / Vitest 캐시 =====
+.vite/
+vite.config.*.timestamp-*
+
+# ===== Storybook (만약 쓴다면) =====
+storybook-static/
+
+# ===== 이미지/디자인 임시 파일 =====
+*.swp
+*.swo
+
+# ===== 보안 관련 =====
+*.pem
+*.key
+secrets/
+
+# ===== 패키지 매니저 임시 =====
+.npm/
+.yarn/cache
+.yarn/install-state.gz
+.pnp.*
+
+# ===== 빌드 결과 (대체 경로) =====
+build/
+out/
+
+# ===== 임시 파일 =====
+*.tmp
+*.bak

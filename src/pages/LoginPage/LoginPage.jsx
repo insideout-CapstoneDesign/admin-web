@@ -124,6 +124,7 @@ export default function LoginPage() {
         e.preventDefault()
         // TODO: 로그인 API 연동
         console.log('로그인 시도')
+        navigate('/dashboard')
     }
 
     return (
