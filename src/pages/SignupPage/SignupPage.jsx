@@ -17,6 +17,7 @@ import {
 const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]).{8,}$/
 
 const signupSchema = z.object({
+    displayName: z.string().min(1, '이름을 입력해주세요.'),
     email: z.string().email('유효한 이메일 형식이 아닙니다.'),
     password: z.string().regex(
         passwordRegex,
@@ -49,6 +50,18 @@ export default function SignupPage() {
             <PageTitle>회원가입</PageTitle>
 
             <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+                <FieldGroup>
+                    <Label htmlFor="display-name">이름</Label>
+                    <Input
+                        id="display-name"
+                        type="text"
+                        placeholder="이름"
+                        {...register('displayName')}
+                        autoComplete="name"
+                    />
+                    {errors.displayName && <ErrorMessage>{errors.displayName.message}</ErrorMessage>}
+                </FieldGroup>
+
                 <FieldGroup>
                     <Label htmlFor="email">이메일</Label>
                     <Input
