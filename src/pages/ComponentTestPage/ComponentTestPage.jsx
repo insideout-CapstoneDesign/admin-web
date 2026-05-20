@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import styled from 'styled-components'
 import Button from '../../components/Button/Button'
 import ContainerBox from '../../components/ContainerBox/ContainerBox'
 import DeletableTextBox from '../../components/DeletableTextBox/DeletableTextBox'
@@ -9,42 +8,13 @@ import {
     deletableTextBoxMocks,
     textInputMock,
 } from '../../mocks/componentTest.mock'
-
-const Page = styled.main`
-    width: 100%;
-    max-width: 424px;
-    margin: 0 auto;
-    padding: 32px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-`
-
-const SectionTitle = styled.h2`
-    color: var(--black-900);
-    font-size: var(--text-16);
-    font-weight: var(--fw-bold);
-    margin: 24px 0 4px;
-`
-
-const ThreeCol = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: var(--space-8);
-`
-
-const TwoCol = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-12);
-`
-
-const Section = styled.section`
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-`
+import {
+    Page,
+    Section,
+    SectionTitle,
+    ThreeCol,
+    TwoCol,
+} from './ComponentTestPage.styles'
 
 export default function ComponentTestPage() {
     const [placeName, setPlaceName] = useState('')

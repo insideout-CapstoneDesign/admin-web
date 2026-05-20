@@ -1,11 +1,20 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import styled from 'styled-components'
-import Button from '../../components/Button/Button'
 import { useNavigate } from 'react-router-dom'
+import {
+    ErrorMessage,
+    FieldGroup,
+    Form,
+    Input,
+    Label,
+    LoginLink,
+    PageTitle,
+    SubmitButton,
+    Wrapper,
+} from './SignupPage.styles'
 
-const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/
+const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]).{8,}$/
 
 const signupSchema = z.object({
     email: z.string().email('유효한 이메일 형식이 아닙니다.'),
@@ -18,125 +27,6 @@ const signupSchema = z.object({
     message: '비밀번호가 일치하지 않습니다.',
     path: ['passwordConfirm'],
 })
-
-const Wrapper = styled.div`
-    width: 100%;
-    min-height: calc(100vh - 65px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--white);
-    padding: 32px;
-`
-
-const LogoArea = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 24px;
-`
-
-const LogoImage = styled.img`
-    width: 56px;
-    height: auto;
-    margin-bottom: 8px;
-`
-
-const LogoText = styled.span`
-    font-family: var(--font-sans);
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--blue-500);
-    letter-spacing: 1px;
-`
-
-const PageTitle = styled.h1`
-    font-family: var(--font-sans);
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--blue-500);
-    margin: 0 0 32px;
-`
-
-const Form = styled.form`
-    width: 100%;
-    max-width: 340px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-`
-
-const FieldGroup = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-`
-
-const Label = styled.label`
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: var(--fw-semibold);
-    color: var(--black-950);
-`
-
-const Input = styled.input`
-    width: 100%;
-    height: 48px;
-    padding: 0 16px;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-8);
-    background-color: var(--white);
-    color: var(--black-900);
-    font-family: var(--font-sans);
-    font-size: var(--text-14);
-    font-weight: var(--fw-medium);
-    outline: none;
-    transition: border-color 0.2s;
-
-    &::placeholder {
-        color: var(--gray-400);
-    }
-
-    &:focus {
-        border-color: var(--blue-500);
-    }
-`
-
-const SubmitButton = styled(Button)`
-    width: 100%;
-    height: 48px;
-    margin-top: 4px;
-    font-size: var(--text-16);
-    font-weight: var(--fw-bold);
-    border-radius: var(--radius-8);
-`
-
-const LoginLink = styled.button`
-    margin-top: 8px;
-    background: none;
-    border: none;
-    padding: 0;
-    font-family: var(--font-sans);
-    font-size: var(--text-14);
-    font-weight: var(--fw-medium);
-    color: var(--gray-500);
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    align-self: center;
-
-    &:hover {
-        color: var(--blue-500);
-    }
-`
-
-const ErrorMessage = styled.span`
-    color: var(--red-500, #ef4444);
-    font-size: 12px;
-    font-family: var(--font-sans);
-    margin-top: 4px;
-`
 
 export default function SignupPage() {
     const navigate = useNavigate()
