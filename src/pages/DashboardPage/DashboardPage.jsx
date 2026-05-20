@@ -1,206 +1,29 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import Button from '../../components/Button/Button'
 import TenantModal from '../../components/Modal/TenantModal'
+import {
+    ActionButtons,
+    AddButton,
+    Container,
+    PageWrapper,
+    SearchContainer,
+    SearchIcon,
+    SearchInput,
+    StatCard,
+    StatLabel,
+    StatNumber,
+    StatsGrid,
+    StatusBadge,
+    StatUnit,
+    StatValueRow,
+    Table,
+    TableContainer,
+    Td,
+    Th,
+    Toolbar,
+    Tr,
+} from './DashboardPage.styles'
 
-/* ── Layout ── */
-const PageWrapper = styled.div`
-    width: 100%;
-    min-height: calc(100vh - 65px);
-    background-color: var(--white);
-`
-
-const Container = styled.div`
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 32px;
-`
-
-/* ── Stats Section ── */
-const StatsGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-    margin-bottom: 32px;
-`
-
-const StatCard = styled.div`
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-8);
-    padding: 24px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
-`
-
-const StatLabel = styled.span`
-    font-family: var(--font-sans);
-    font-size: var(--text-14);
-    font-weight: var(--fw-semibold);
-    color: var(--gray-600);
-`
-
-const StatValueRow = styled.div`
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-`
-
-const StatNumber = styled.span`
-    font-family: var(--font-sans);
-    font-size: 36px;
-    font-weight: var(--fw-bold);
-    color: var(--blue-500);
-`
-
-const StatUnit = styled.span`
-    font-family: var(--font-sans);
-    font-size: var(--text-16);
-    font-weight: var(--fw-medium);
-    color: var(--gray-500);
-`
-
-/* ── Toolbar Section ── */
-const Toolbar = styled.div`
-    display: flex;
-    gap: 16px;
-    margin-bottom: 24px;
-`
-
-const SearchContainer = styled.div`
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-`
-
-const SearchIcon = styled.svg`
-    position: absolute;
-    left: 16px;
-    width: 20px;
-    height: 20px;
-    color: var(--gray-400);
-`
-
-const SearchInput = styled.input`
-    width: 100%;
-    height: 48px;
-    padding: 0 16px 0 44px;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-8);
-    font-family: var(--font-sans);
-    font-size: var(--text-14);
-    outline: none;
-    transition: border-color 0.2s;
-
-    &:focus {
-        border-color: var(--blue-500);
-    }
-
-    &::placeholder {
-        color: var(--gray-400);
-    }
-`
-
-const AddButton = styled(Button)`
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-8);
-    font-size: 24px;
-`
-
-/* ── Table Section ── */
-const TableContainer = styled.div`
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-8);
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
-`
-
-const Table = styled.table`
-    width: 100%;
-    border-collapse: collapse;
-`
-
-const Th = styled.th`
-    background: var(--gray-50);
-    padding: 16px 24px;
-    text-align: left;
-    font-family: var(--font-sans);
-    font-size: var(--text-14);
-    font-weight: var(--fw-bold);
-    color: var(--black-900);
-    border-bottom: 1px solid var(--gray-200);
-`
-
-const Td = styled.td`
-    padding: 16px 24px;
-    text-align: left;
-    font-family: var(--font-sans);
-    font-size: var(--text-14);
-    font-weight: var(--fw-medium);
-    color: var(--gray-700);
-    border-bottom: 1px solid var(--gray-100);
-`
-
-const Tr = styled.tr`
-    cursor: pointer;
-    transition: background-color 0.2s;
-    &:hover {
-        background-color: var(--gray-50);
-    }
-    &:last-child ${Td} {
-        border-bottom: none;
-    }
-`
-
-const StatusBadge = styled.span`
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 12px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: var(--fw-bold);
-    background-color: ${({ $status }) => ($status === '승인' ? '#dcfce7' : '#fef08a')};
-    color: ${({ $status }) => ($status === '승인' ? '#166534' : '#854d0e')};
-`
-
-const ActionButtons = styled.div`
-    display: flex;
-    gap: 12px;
-    color: var(--gray-400);
-
-    button {
-        background: none;
-        border: none;
-        padding: 4px;
-        cursor: pointer;
-        color: inherit;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.2s;
-
-        &:hover {
-            color: var(--blue-500);
-        }
-        
-        &.delete:hover {
-            color: var(--red-500, #ef4444);
-        }
-    }
-`
-
-/* ── Mock Data ── */
 const mockData = [
     { id: 1, name: '동국대학교', buildingCount: 9, visitors: 45, status: '승인' },
     { id: 2, name: '신세계백화점 본점', buildingCount: 4, visitors: 30, status: '대기중' },

@@ -49,13 +49,6 @@ const Title = styled.h2`
     margin: 0;
 `
 
-const Subtitle = styled.p`
-    margin: 0;
-    color: var(--gray-500);
-    font-size: 12px;
-    line-height: 1.5;
-`
-
 const ActionRow = styled.div`
     display: flex;
     align-items: center;
@@ -302,13 +295,6 @@ const SidebarTitle = styled.h3`
     color: var(--black-900);
 `
 
-const SidebarText = styled.p`
-    margin: 0;
-    color: var(--gray-500);
-    font-size: 12px;
-    line-height: 1.55;
-`
-
 const SummaryGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -405,10 +391,6 @@ function getTypeMeta(type) {
 
 function hasValidBoundingBox(detection) {
     return Array.isArray(detection?.bboxPx) && detection.bboxPx.length === 4
-}
-
-function formatConfidence(value) {
-    return `${Math.round((value || 0) * 100)}%`
 }
 
 function readImageDimensions(file) {

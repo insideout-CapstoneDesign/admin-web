@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 import styled from 'styled-components'
 import Button from '../Button/Button'
 
@@ -178,13 +178,16 @@ export default function AddressSearchModal({ isOpen, onClose, onSelect }) {
     const [results, setResults] = useState([])
     const [hasSearched, setHasSearched] = useState(false)
 
-    useEffect(() => {
-        if (isOpen) {
-            setKeyword('')
-            setResults([])
-            setHasSearched(false)
-        }
-    }, [isOpen])
+    const resetSearchState = () => {
+        setKeyword('')
+        setResults([])
+        setHasSearched(false)
+    }
+
+    const handleClose = () => {
+        resetSearchState()
+        onClose()
+    }
 
     if (!isOpen) return null
 
@@ -234,15 +237,15 @@ export default function AddressSearchModal({ isOpen, onClose, onSelect }) {
 
     const handleSelect = (place) => {
         onSelect(place)
-        onClose()
+        handleClose()
     }
 
     return (
-        <Overlay onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+        <Overlay onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
             <ModalContainer>
                 <Header>
                     <Title>주소 및 장소 검색</Title>
-                    <CloseButton type="button" onClick={onClose}>
+                    <CloseButton type="button" onClick={handleClose}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
