@@ -91,3 +91,10 @@ export const SignupLink = styled.button`
         color: var(--blue-500);
     }
 `
+
+export const ErrorMessage = styled.span`
+    color: var(--red-500, #ef4444);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    margin-top: 4px;
+`

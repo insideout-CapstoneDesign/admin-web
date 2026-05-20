@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
+import { loginSchema } from '../../schemas/auth.schema'
 import {
+    ErrorMessage,
     FieldGroup,
     Form,
     Input,
@@ -13,13 +16,18 @@ import {
 
 export default function LoginPage() {
     const navigate = useNavigate()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(loginSchema),
+        mode: 'onChange',
+    })
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
+    const onSubmit = (data) => {
         // TODO: 로그인 API 연동
-        console.log('로그인 시도')
+        console.log('로그인 시도:', data)
         navigate('/dashboard')
     }
 
@@ -27,17 +35,17 @@ export default function LoginPage() {
         <Wrapper>
             <PageTitle>로그인</PageTitle>
 
-            <Form onSubmit={handleSubmit}>
+            <Form noValidate onSubmit={handleSubmit(onSubmit)}>
                 <FieldGroup>
                     <Label htmlFor="email">이메일</Label>
                     <Input
                         id="email"
                         type="email"
                         placeholder="이메일을 입력하세요"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        {...register('email')}
                         autoComplete="email"
                     />
+                    {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
                 </FieldGroup>
 
                 <FieldGroup>
@@ -46,10 +54,10 @@ export default function LoginPage() {
                         id="password"
                         type="password"
                         placeholder="비밀번호를 입력하세요"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        {...register('password')}
                         autoComplete="current-password"
                     />
+                    {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
                 </FieldGroup>
 
                 <LoginButton variant="primary" size="lg" type="submit">

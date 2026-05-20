@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
+import { signupSchema } from '../../schemas/auth.schema'
 import {
     ErrorMessage,
     FieldGroup,
@@ -13,21 +13,6 @@ import {
     SubmitButton,
     Wrapper,
 } from './SignupPage.styles'
-
-const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}[\]:;<>,.?~\\/-]).{8,}$/
-
-const signupSchema = z.object({
-    displayName: z.string().min(1, '이름을 입력해주세요.'),
-    email: z.string().email('유효한 이메일 형식이 아닙니다.'),
-    password: z.string().regex(
-        passwordRegex,
-        '영문, 숫자, 특수문자를 포함하여 8자 이상 입력해주세요.'
-    ),
-    passwordConfirm: z.string(),
-}).refine((data) => data.password === data.passwordConfirm, {
-    message: '비밀번호가 일치하지 않습니다.',
-    path: ['passwordConfirm'],
-})
 
 export default function SignupPage() {
     const navigate = useNavigate()
@@ -57,6 +42,7 @@ export default function SignupPage() {
                         type="text"
                         placeholder="이름"
                         {...register('displayName')}
+                        maxLength={10}
                         autoComplete="name"
                     />
                     {errors.displayName && <ErrorMessage>{errors.displayName.message}</ErrorMessage>}
