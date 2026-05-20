@@ -44,8 +44,18 @@ export default function LoginPage() {
                         placeholder="이메일을 입력하세요"
                         {...register('email')}
                         autoComplete="email"
+                        aria-invalid={Boolean(errors.email)}
+                        aria-describedby="login-email-error"
                     />
-                    {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+                    <ErrorMessage
+                        id="login-email-error"
+                        $visible={Boolean(errors.email)}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-hidden={!errors.email}
+                    >
+                        {errors.email?.message || '\u00A0'}
+                    </ErrorMessage>
                 </FieldGroup>
 
                 <FieldGroup>
@@ -56,8 +66,18 @@ export default function LoginPage() {
                         placeholder="비밀번호를 입력하세요"
                         {...register('password')}
                         autoComplete="current-password"
+                        aria-invalid={Boolean(errors.password)}
+                        aria-describedby="login-password-error"
                     />
-                    {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
+                    <ErrorMessage
+                        id="login-password-error"
+                        $visible={Boolean(errors.password)}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-hidden={!errors.password}
+                    >
+                        {errors.password?.message || '\u00A0'}
+                    </ErrorMessage>
                 </FieldGroup>
 
                 <LoginButton variant="primary" size="lg" type="submit">

@@ -25,13 +25,13 @@ export const Form = styled.form`
     max-width: 340px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
 `
 
 export const FieldGroup = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 `
 
 export const Label = styled.label`
@@ -93,8 +93,12 @@ export const LoginLink = styled.button`
 `
 
 export const ErrorMessage = styled.span`
+    display: block;
+    min-height: 14px;
+    line-height: 14px;
     color: var(--red-500, #ef4444);
     font-size: 12px;
     font-family: var(--font-sans);
-    margin-top: 4px;
+    margin-top: 2px;
+    visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `

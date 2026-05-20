@@ -93,8 +93,12 @@ export const SignupLink = styled.button`
 `
 
 export const ErrorMessage = styled.span`
+    display: block;
+    min-height: 16px;
+    line-height: 16px;
     color: var(--red-500, #ef4444);
     font-size: 12px;
     font-family: var(--font-sans);
     margin-top: 4px;
+    visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `

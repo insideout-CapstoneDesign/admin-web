@@ -44,8 +44,18 @@ export default function SignupPage() {
                         {...register('displayName')}
                         maxLength={10}
                         autoComplete="name"
+                        aria-invalid={Boolean(errors.displayName)}
+                        aria-describedby="signup-display-name-error"
                     />
-                    {errors.displayName && <ErrorMessage>{errors.displayName.message}</ErrorMessage>}
+                    <ErrorMessage
+                        id="signup-display-name-error"
+                        $visible={Boolean(errors.displayName)}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-hidden={!errors.displayName}
+                    >
+                        {errors.displayName?.message || '\u00A0'}
+                    </ErrorMessage>
                 </FieldGroup>
 
                 <FieldGroup>
@@ -56,8 +66,18 @@ export default function SignupPage() {
                         placeholder="이메일"
                         {...register('email')}
                         autoComplete="email"
+                        aria-invalid={Boolean(errors.email)}
+                        aria-describedby="signup-email-error"
                     />
-                    {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+                    <ErrorMessage
+                        id="signup-email-error"
+                        $visible={Boolean(errors.email)}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-hidden={!errors.email}
+                    >
+                        {errors.email?.message || '\u00A0'}
+                    </ErrorMessage>
                 </FieldGroup>
 
                 <FieldGroup>
@@ -68,8 +88,18 @@ export default function SignupPage() {
                         placeholder="8자 이상 입력"
                         {...register('password')}
                         autoComplete="new-password"
+                        aria-invalid={Boolean(errors.password)}
+                        aria-describedby="signup-password-error"
                     />
-                    {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
+                    <ErrorMessage
+                        id="signup-password-error"
+                        $visible={Boolean(errors.password)}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-hidden={!errors.password}
+                    >
+                        {errors.password?.message || '\u00A0'}
+                    </ErrorMessage>
                 </FieldGroup>
 
                 <FieldGroup>
@@ -80,8 +110,18 @@ export default function SignupPage() {
                         placeholder="비밀번호 확인"
                         {...register('passwordConfirm')}
                         autoComplete="new-password"
+                        aria-invalid={Boolean(errors.passwordConfirm)}
+                        aria-describedby="signup-password-confirm-error"
                     />
-                    {errors.passwordConfirm && <ErrorMessage>{errors.passwordConfirm.message}</ErrorMessage>}
+                    <ErrorMessage
+                        id="signup-password-confirm-error"
+                        $visible={Boolean(errors.passwordConfirm)}
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-hidden={!errors.passwordConfirm}
+                    >
+                        {errors.passwordConfirm?.message || '\u00A0'}
+                    </ErrorMessage>
                 </FieldGroup>
 
                 <SubmitButton variant="primary" size="lg" type="submit">
