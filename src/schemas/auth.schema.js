@@ -14,7 +14,7 @@ export const loginSchema = z.object({
         .string()
         .min(1, '이메일을 입력해 주세요.')
         .email('올바른 이메일 형식을 입력해 주세요.'),
-    password: passwordSchema,
+    password: z.string().min(1, '비밀번호를 입력해 주세요.'),
 })
 
 export const signupSchema = z
