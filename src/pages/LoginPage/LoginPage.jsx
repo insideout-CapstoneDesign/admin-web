@@ -46,10 +46,10 @@ export default function LoginPage() {
             })
 
             if (result?.accessToken) {
-                sessionStorage.setItem('accessToken', result.accessToken)
+                localStorage.setItem('accessToken', result.accessToken)
             }
             if (result?.refreshToken) {
-                sessionStorage.setItem('refreshToken', result.refreshToken)
+                localStorage.setItem('refreshToken', result.refreshToken)
             }
 
             navigate('/dashboard')
