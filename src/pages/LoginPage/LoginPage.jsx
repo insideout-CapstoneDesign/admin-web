@@ -1,7 +1,14 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { loginSchema } from '../../schemas/auth.schema'
+import {
+    getAuthErrorMessage,
+    isLoginFailedError,
+    LOGIN_FAILED_MESSAGE,
+} from '../../errors/authError'
+import { login } from '../../services/auth'
 import {
     ErrorMessage,
     FieldGroup,
@@ -16,6 +23,8 @@ import {
 
 export default function LoginPage() {
     const navigate = useNavigate()
+    const [submitError, setSubmitError] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const {
         register,
         handleSubmit,
@@ -25,10 +34,35 @@ export default function LoginPage() {
         mode: 'onChange',
     })
 
-    const onSubmit = (data) => {
-        // TODO: 로그인 API 연동
-        console.log('로그인 시도:', data)
-        navigate('/dashboard')
+    const onSubmit = async (data) => {
+        setSubmitError('')
+        setIsSubmitting(true)
+
+        try {
+            const result = await login({
+                email: data.email,
+                password: data.password,
+                portalType: 'TENANT',
+            })
+
+            if (result?.accessToken) {
+                sessionStorage.setItem('accessToken', result.accessToken)
+            }
+            if (result?.refreshToken) {
+                sessionStorage.setItem('refreshToken', result.refreshToken)
+            }
+
+            navigate('/dashboard')
+        } catch (error) {
+            if (isLoginFailedError(error)) {
+                setSubmitError(LOGIN_FAILED_MESSAGE)
+                return
+            }
+
+            setSubmitError(getAuthErrorMessage(error, '로그인 중 오류가 발생했습니다.'))
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -80,9 +114,14 @@ export default function LoginPage() {
                     </ErrorMessage>
                 </FieldGroup>
 
-                <LoginButton variant="primary" size="lg" type="submit">
-                    로그인
+                <LoginButton variant="primary" size="lg" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? '로그인 중...' : '로그인'}
                 </LoginButton>
+                {submitError && (
+                    <ErrorMessage as="p" $visible aria-live="polite" style={{ marginTop: '0' }}>
+                        {submitError}
+                    </ErrorMessage>
+                )}
 
                 <SignupLink type="button" onClick={() => navigate('/signup')}>
                     회원가입

@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { signupSchema } from '../../schemas/auth.schema'
+import { getAuthErrorMessage } from '../../errors/authError'
+import { signupTenant } from '../../services/auth'
 import {
     ErrorMessage,
     FieldGroup,
@@ -16,18 +19,36 @@ import {
 
 export default function SignupPage() {
     const navigate = useNavigate()
+    const [submitError, setSubmitError] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const {
         register,
         handleSubmit,
+        reset,
         formState: { errors },
     } = useForm({
         resolver: zodResolver(signupSchema),
         mode: 'onChange',
     })
 
-    const onSubmit = (data) => {
-        // TODO: 회원가입 API 연동
-        console.log('회원가입 시도:', data)
+    const onSubmit = async (data) => {
+        setSubmitError('')
+        setIsSubmitting(true)
+
+        try {
+            await signupTenant({
+                email: data.email,
+                password: data.password,
+                displayName: data.displayName,
+            })
+
+            reset()
+            navigate('/login')
+        } catch (error) {
+            setSubmitError(getAuthErrorMessage(error, '회원가입 중 오류가 발생했습니다.'))
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -124,9 +145,14 @@ export default function SignupPage() {
                     </ErrorMessage>
                 </FieldGroup>
 
-                <SubmitButton variant="primary" size="lg" type="submit">
-                    회원가입
+                <SubmitButton variant="primary" size="lg" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? '가입 중...' : '회원가입'}
                 </SubmitButton>
+                {submitError && (
+                    <ErrorMessage as="p" $visible aria-live="polite" style={{ marginTop: '0' }}>
+                        {submitError}
+                    </ErrorMessage>
+                )}
 
                 <LoginLink type="button" onClick={() => navigate('/login')}>
                     로그인
