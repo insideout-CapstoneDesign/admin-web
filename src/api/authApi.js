@@ -26,9 +26,9 @@ async function postAuth(path, body) {
     })
 
     const payload = await parseJsonSafe(response)
-    const isSuccess = payload?.isSuccess !== false
+    const isSuccess = payload?.isSuccess
 
-    if (!response.ok || !isSuccess) {
+    if (!response.ok) {
         throw new AuthApiError(
             payload?.message || '요청 처리 중 오류가 발생했습니다.',
             {
@@ -38,7 +38,23 @@ async function postAuth(path, body) {
         )
     }
 
-    return payload?.result || payload
+    if (payload == null) {
+        throw new AuthApiError('서버 응답을 해석할 수 없습니다.', {
+            status: response.status,
+        })
+    }
+
+    if (isSuccess === false) {
+        throw new AuthApiError(
+            payload?.message || '요청 처리 중 오류가 발생했습니다.',
+            {
+                status: response.status,
+                code: payload?.code || null,
+            }
+        )
+    }
+
+    return payload.result ?? payload
 }
 
 export async function signupTenantApi({ email, password, displayName }) {

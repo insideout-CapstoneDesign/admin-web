@@ -148,11 +148,16 @@ export default function SignupPage() {
                 <SubmitButton variant="primary" size="lg" type="submit" disabled={isSubmitting}>
                     {isSubmitting ? '가입 중...' : '회원가입'}
                 </SubmitButton>
-                {submitError && (
-                    <ErrorMessage as="p" $visible aria-live="polite" style={{ marginTop: '0' }}>
-                        {submitError}
-                    </ErrorMessage>
-                )}
+                <ErrorMessage
+                    as="p"
+                    $visible={Boolean(submitError)}
+                    aria-live="polite"
+                    aria-atomic="true"
+                    aria-hidden={!submitError}
+                    style={{ marginTop: '0' }}
+                >
+                    {submitError}
+                </ErrorMessage>
 
                 <LoginLink type="button" onClick={() => navigate('/login')}>
                     로그인

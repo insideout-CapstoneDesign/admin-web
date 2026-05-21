@@ -45,9 +45,12 @@ export default function LoginPage() {
                 portalType: 'TENANT',
             })
 
-            if (result?.accessToken) {
-                localStorage.setItem('accessToken', result.accessToken)
+            if (!result?.accessToken) {
+                setSubmitError('로그인 응답이 올바르지 않습니다. 다시 시도해 주세요.')
+                return
             }
+
+            localStorage.setItem('accessToken', result.accessToken)
             if (result?.refreshToken) {
                 localStorage.setItem('refreshToken', result.refreshToken)
             }
