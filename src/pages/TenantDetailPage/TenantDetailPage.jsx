@@ -481,6 +481,7 @@ export default function TenantDetailPage() {
                 isOpen={isCampusModalOpen}
                 onClose={() => setIsCampusModalOpen(false)}
                 tenantId={tenantId}
+                initialCampus={campus}
                 onSuccess={(savedCampus) => {
                     setCampus(savedCampus);
                     setActiveTab('buildings');

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Button from '../Button/Button'
 import AddressSearchModal from './AddressSearchModal'
-import { createCampusApi } from '../../api/campusApi'
+import { createCampusApi, updateCampusApi } from '../../api/campusApi'
 
 // --- Zod Schema ---
 const coordSchema = z.object({
@@ -29,6 +29,21 @@ const campusSchema = z.object({
     requiresFloorplan: z.boolean(),
     boundary: z.array(coordSchema).min(3, '경계 꼭짓점은 최소 3개 이상 등록해야 합니다.'),
     description: z.string().optional(),
+}).superRefine((data, ctx) => {
+    const normalizedNames = new Map()
+    data.gates.forEach((gate, index) => {
+        const normalizedName = gate.name?.trim().toLowerCase()
+        if (!normalizedName) return
+        if (normalizedNames.has(normalizedName)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['gates', index, 'name'],
+                message: '이미 같은 이름의 출입구가 있습니다.',
+            })
+        } else {
+            normalizedNames.set(normalizedName, index)
+        }
+    })
 })
 
 const defaultValues = {
@@ -40,6 +55,33 @@ const defaultValues = {
     requiresFloorplan: false,
     boundary: [],
     description: '',
+}
+
+const buildFormValues = (campus) => {
+    if (!campus) return defaultValues
+
+    const boundary = Array.isArray(campus.boundary) ? campus.boundary : []
+
+    return {
+        name: campus.name || '',
+        address: campus.address || '',
+        longitude: campus.centroid?.longitude != null ? String(campus.centroid.longitude) : '',
+        latitude: campus.centroid?.latitude != null ? String(campus.centroid.latitude) : '',
+        gates: (campus.gates || []).map((gate) => ({
+            id: gate.id || crypto.randomUUID(),
+            name: gate.name || '',
+            longitude: gate.location?.longitude != null ? String(gate.location.longitude) : '',
+            latitude: gate.location?.latitude != null ? String(gate.location.latitude) : '',
+        })),
+        requiresFloorplan: Boolean(campus.requiresFloorplan),
+        boundary: boundary
+            .slice(0, Math.max(boundary.length - 1, 0))
+            .map((coord) => ({
+                longitude: String(coord.longitude),
+                latitude: String(coord.latitude),
+            })),
+        description: campus.meta?.description || '',
+    }
 }
 
 // --- Styled Components (Wow Aesthetics: 2-Column Responsive Layout) ---
@@ -395,14 +437,16 @@ const GateCardHeader = styled.div`
     }
 `
 
-export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
+export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, initialCampus = null }) {
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [mapMode, setMapMode] = useState('GATE') // 'GATE' | 'BOUNDARY'
+    const isEditMode = Boolean(initialCampus?.id)
     
     // Kakao Map Hooks & Refs
     const mapRef = useRef(null)
     const mapInstance = useRef(null)
     const gateMarkersRef = useRef([])
+    const gateLabelsRef = useRef([])
     const centroidMarkerRef = useRef(null)
     const boundaryPolygonRef = useRef(null)
     const boundaryMarkersRef = useRef([])
@@ -455,13 +499,13 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
     // 1. 모달이 열리면 기본 초기화
     useEffect(() => {
         if (isOpen) {
-            reset(defaultValues)
+            reset(buildFormValues(initialCampus))
             // 지도가 그려질 시점에 kakao 객체 셋업
             setTimeout(initMap, 150)
         } else {
             cleanupMap()
         }
-    }, [isOpen, reset])
+    }, [isOpen, reset, initialCampus])
 
     // 2. 중심 좌표가 설정되면 지도 이동
     useEffect(() => {
@@ -505,6 +549,8 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
 
         gateMarkersRef.current.forEach((marker) => marker.setMap(null))
         gateMarkersRef.current = []
+        gateLabelsRef.current.forEach((overlay) => overlay.setMap(null))
+        gateLabelsRef.current = []
 
         if (!gateCoords || gateCoords.length === 0) return
 
@@ -520,11 +566,15 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
                 title: gate.name || `Gate ${index + 1}`,
             })
 
-            const infoWindow = new window.kakao.maps.InfoWindow({
-                content: `<div style="padding:6px 10px;font-size:12px;font-weight:600;">${gate.name || `Gate ${index + 1}`}</div>`,
+            const label = new window.kakao.maps.CustomOverlay({
+                position: pos,
+                yAnchor: 1.7,
+                content: `<div style="padding:6px 10px;font-size:12px;font-weight:600;background:#fff;border:1px solid #94a3b8;border-radius:0;min-width:120px;text-align:center;box-shadow:0 4px 10px rgba(15,23,42,0.08);">${gate.name || `Gate ${index + 1}`}</div>`,
+                zIndex: 4,
             })
-            infoWindow.open(mapInstance.current, marker)
+            label.setMap(mapInstance.current)
             gateMarkersRef.current.push(marker)
+            gateLabelsRef.current.push(label)
         })
     }
 
@@ -643,6 +693,7 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
 
     const cleanupMap = () => {
         gateMarkersRef.current = []
+        gateLabelsRef.current = []
         centroidMarkerRef.current = null
         boundaryPolygonRef.current = null
         boundaryMarkersRef.current = []
@@ -713,6 +764,10 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
     }
 
     const resetGates = () => {
+        gateMarkersRef.current.forEach((marker) => marker.setMap(null))
+        gateMarkersRef.current = []
+        gateLabelsRef.current.forEach((overlay) => overlay.setMap(null))
+        gateLabelsRef.current = []
         replaceGates([])
     }
 
@@ -755,8 +810,10 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
         }
 
         try {
-            const savedCampus = await createCampusApi(tenantId, payload)
-            alert('캠퍼스 지리 정보가 성공적으로 등록되었습니다.')
+            const savedCampus = isEditMode
+                ? await updateCampusApi(tenantId, initialCampus.id, payload)
+                : await createCampusApi(tenantId, payload)
+            alert(isEditMode ? '캠퍼스 지리 정보가 성공적으로 수정되었습니다.' : '캠퍼스 지리 정보가 성공적으로 등록되었습니다.')
             if (onSuccess) {
                 onSuccess(savedCampus)
             }
@@ -777,7 +834,7 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
             <Overlay onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
                 <ModalContainer>
                     <Header>
-                        <Title>캠퍼스 지리 정보 등록</Title>
+                        <Title>{isEditMode ? '캠퍼스 지리 정보 수정' : '캠퍼스 지리 정보 등록'}</Title>
                         <CloseButton type="button" onClick={handleClose}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -870,7 +927,7 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
 
                                 <FieldGroup>
                                     <Label>등록된 Campus Gate ({gateFields.length}개)</Label>
-                                    <Description>지도에서 게이트 추가 모드로 클릭하면 출입구가 하나씩 등록됩니다. 각 Gate 이름은 아래에서 수정할 수 있습니다.</Description>
+                                    <Description>지도에서 Gate 추가 모드로 클릭하면 출입구가 등록됩니다. 아래 입력란에서 이름을 바꾸면 지도 라벨에도 같은 이름이 반영됩니다.</Description>
                                     <GateList>
                                         {gateFields.length === 0 ? (
                                             <BoundaryPreviewBox>
@@ -883,16 +940,19 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
                                                 <GateCard key={gate.id}>
                                                     <input type="hidden" {...register(`gates.${index}.id`)} />
                                                     <GateCardHeader>
-                                                        <span className="title">Gate #{index + 1}</span>
+                                                        <span className="title">출입구 #{index + 1}</span>
                                                         <ActionButton type="button" onClick={() => removeGate(index)}>
                                                             삭제
                                                         </ActionButton>
                                                     </GateCardHeader>
                                                     <Input
                                                         type="text"
-                                                        placeholder={`예: Gate ${index + 1}`}
+                                                        placeholder={`예: Gate ${index + 1} / 정문 출입구`}
                                                         {...register(`gates.${index}.name`)}
                                                     />
+                                                    {errors.gates?.[index]?.name && (
+                                                        <ErrorMessage>{errors.gates[index].name.message}</ErrorMessage>
+                                                    )}
                                                     <GridRow>
                                                         <Input
                                                             type="text"
@@ -949,7 +1009,7 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
                                                 $active={mapMode === 'BOUNDARY'}
                                                 onClick={() => setMapMode('BOUNDARY')}
                                             >
-                                                🔷 경계 꼭짓점 추가
+                                                경계 꼭짓점 추가
                                             </ToolButton>
                                         </ToolModeGroup>
                                         <Button
@@ -1003,7 +1063,7 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess }) {
                                 취소
                             </Button>
                             <Button type="submit" variant="primary">
-                                등록
+                                {isEditMode ? '저장' : '등록'}
                             </Button>
                         </Footer>
                     </Form>
