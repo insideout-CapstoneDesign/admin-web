@@ -56,6 +56,20 @@ export function createMockAiAnalysisResult({
 } = {}) {
     const resolvedWidth = imageWidth || width
     const resolvedHeight = imageHeight || height
+    const scaleX = resolvedWidth / width
+    const scaleY = resolvedHeight / height
+
+    const scaledDetections = mockDetections.map((detection) => ({
+        ...detection,
+        bboxPx: Array.isArray(detection.bboxPx) && detection.bboxPx.length === 4
+            ? [
+                Math.round(detection.bboxPx[0] * scaleX),
+                Math.round(detection.bboxPx[1] * scaleY),
+                Math.round(detection.bboxPx[2] * scaleX),
+                Math.round(detection.bboxPx[3] * scaleY),
+            ]
+            : detection.bboxPx,
+    }))
 
     return {
         jobId: `mock-job-${floorplanId}`,
@@ -65,7 +79,7 @@ export function createMockAiAnalysisResult({
         floorName,
         imageWidth: resolvedWidth,
         imageHeight: resolvedHeight,
-        detectionCount: mockDetections.length,
-        detections: mockDetections,
+        detectionCount: scaledDetections.length,
+        detections: scaledDetections,
     }
 }

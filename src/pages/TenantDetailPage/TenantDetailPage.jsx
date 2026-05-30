@@ -189,6 +189,7 @@ export default function TenantDetailPage() {
     const loadCampus = async () => {
         setLoading(true)
         setError('')
+        setActiveTab('map')
         try {
             const campuses = await getCampusesApi(tenantId)
             if (campuses && campuses.length > 0) {
@@ -196,7 +197,6 @@ export default function TenantDetailPage() {
                 setActiveTab('buildings')
             } else {
                 setCampus(null)
-                setActiveTab('map')
             }
         } catch (err) {
             console.error(err)
@@ -333,11 +333,11 @@ export default function TenantDetailPage() {
                                         buildings.map((item) => (
                                             <Tr
                                                 key={item.id}
-                                                onClick={() => navigate(`/building/${item.id}`, { state: { building: item, campus } })}
+                                                onClick={() => navigate(`/building/${item.id}?tenantId=${tenantId}`, { state: { building: item, campus } })}
                                             >
                                                 <Td style={{ color: 'var(--black-900)' }}>
                                                     <BuildingLink
-                                                        to={`/building/${item.id}`}
+                                                        to={`/building/${item.id}?tenantId=${tenantId}`}
                                                         state={{ building: item, campus }}
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
@@ -473,7 +473,7 @@ export default function TenantDetailPage() {
                 campus={campus}
                 onSubmitSuccess={(building) => {
                     fetchTenantAndBuildings();
-                    navigate(`/building/${building.id}`, { state: { building } });
+                    navigate(`/building/${building.id}?tenantId=${tenantId}`, { state: { building } });
                 }}
             />
 

@@ -53,6 +53,12 @@ function normalizeAiAnalysisResult(payload, fallbackMeta) {
     }
 }
 
+function createSessionExpiredError() {
+    const error = new Error('로그인 세션이 만료되었습니다.')
+    error.code = 'SESSION_EXPIRED'
+    return error
+}
+
 export async function analyzeFloorplan({
     floorplanId,
     floorName,
@@ -91,7 +97,7 @@ export async function analyzeFloorplan({
 
         if (isUnauthorizedResponse(response, payload)) {
             handleSessionExpired()
-            throw new Error('로그인 세션이 만료되었습니다.')
+            throw createSessionExpiredError()
         }
 
         if (!response.ok) {
@@ -107,6 +113,10 @@ export async function analyzeFloorplan({
             source: 'api',
         })
     } catch (error) {
+        if (error?.code === 'SESSION_EXPIRED') {
+            throw error
+        }
+
         if (!allowMockFallback) {
             throw error
         }
@@ -151,7 +161,7 @@ export async function getFloorplanDetections({
 
         if (isUnauthorizedResponse(response, payload)) {
             handleSessionExpired()
-            throw new Error('로그인 세션이 만료되었습니다.')
+            throw createSessionExpiredError()
         }
 
         if (!response.ok) {
@@ -173,6 +183,10 @@ export async function getFloorplanDetections({
             source: 'api',
         })
     } catch (error) {
+        if (error?.code === 'SESSION_EXPIRED') {
+            throw error
+        }
+
         if (!allowMockFallback) {
             throw error
         }

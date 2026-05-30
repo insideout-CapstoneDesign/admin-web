@@ -52,6 +52,12 @@ function normalizeCampusAiResult(payload, fallbackMeta) {
     }
 }
 
+function createSessionExpiredError() {
+    const error = new Error('로그인 세션이 만료되었습니다.')
+    error.code = 'SESSION_EXPIRED'
+    return error
+}
+
 export async function analyzeCampusMap({
     campusMapId,
     tenantId,
@@ -69,7 +75,7 @@ export async function analyzeCampusMap({
         source: 'mock',
     }
 
-    if (useMock || !baseUrl || !campusMapId) {
+    if (useMock || !baseUrl || !campusMapId || !tenantId) {
         await sleep(MOCK_DELAY_MS)
         return createMockCampusAiResult(fallbackMeta)
     }
@@ -88,7 +94,7 @@ export async function analyzeCampusMap({
 
         if (isUnauthorizedResponse(response, payload)) {
             handleSessionExpired()
-            throw new Error('로그인 세션이 만료되었습니다.')
+            throw createSessionExpiredError()
         }
 
         if (!response.ok) {
@@ -104,6 +110,10 @@ export async function analyzeCampusMap({
             source: 'api',
         })
     } catch (error) {
+        if (error?.code === 'SESSION_EXPIRED') {
+            throw error
+        }
+
         if (!allowMockFallback) {
             throw error
         }
@@ -124,7 +134,7 @@ export async function getCampusDetections({
     const baseUrl = import.meta.env.VITE_AI_API_BASE_URL?.trim() || import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8080'
     const useMock = import.meta.env.VITE_USE_MOCK_AI !== 'false'
 
-    if (useMock || !baseUrl || !campusMapId) {
+    if (useMock || !baseUrl || !campusMapId || !tenantId) {
         return createMockCampusAiResult({ campusMapId })
     }
 
@@ -141,7 +151,7 @@ export async function getCampusDetections({
 
         if (isUnauthorizedResponse(response, payload)) {
             handleSessionExpired()
-            throw new Error('로그인 세션이 만료되었습니다.')
+            throw createSessionExpiredError()
         }
 
         if (!response.ok) {
@@ -155,6 +165,10 @@ export async function getCampusDetections({
             source: 'api',
         })
     } catch (error) {
+        if (error?.code === 'SESSION_EXPIRED') {
+            throw error
+        }
+
         if (!allowMockFallback) {
             throw error
         }

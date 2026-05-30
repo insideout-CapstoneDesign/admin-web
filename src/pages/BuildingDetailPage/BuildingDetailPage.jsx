@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import FloorplanUploadView from '../../components/Upload/FloorplanUploadView'
+import { getBuildingByIdApi } from '../../api/buildingApi'
 import {
     AddFloorBtn,
     BackButton,
@@ -23,35 +24,38 @@ function formatFloorLabel(level) {
     return level < 0 ? `B${Math.abs(level)}층` : `${level}층`
 }
 
-function createMockFloorIds(buildingId, level) {
-    const normalizedLevel = level < 0 ? `b${Math.abs(level)}` : `${level}f`
-
-    return {
-        floorId: `mock-floor-${buildingId}-${normalizedLevel}`,
-        floorplanId: `mock-floorplan-${buildingId}-${normalizedLevel}`,
-    }
-}
-
-function createFloorViewModel({ buildingId, level, name, hasMap = false, floorId, floorplanId, floorplanImageUrl = null }) {
-    const mockIds = createMockFloorIds(buildingId, level)
+function createFloorViewModel({ buildingId, level, name, hasMap = false, floorId, floorplanId, floorplanImageUrl = null, analysisCompleted = false }) {
     const resolvedHasMap = Boolean(floorplanImageUrl) || hasMap
 
     return {
         level,
         name: name || formatFloorLabel(level),
         hasMap: resolvedHasMap,
-        floorId: floorId || mockIds.floorId,
+        floorId,
         floorplanId: floorplanId || null,
         floorplanImageUrl: floorplanImageUrl || null,
+        analysisCompleted: Boolean(analysisCompleted),
     }
 }
 
-const fallbackFloors = [
-    createFloorViewModel({ buildingId: '101', level: 3, name: '3층', hasMap: false, floorplanId: 'mock-floorplan-101-3f' }),
-    createFloorViewModel({ buildingId: '101', level: 2, name: '2층', hasMap: true, floorplanId: 'mock-floorplan-101-2f' }),
-    createFloorViewModel({ buildingId: '101', level: 1, name: '1층', hasMap: false, floorplanId: 'mock-floorplan-101-1f' }),
-    createFloorViewModel({ buildingId: '101', level: -1, name: 'B1층', hasMap: false, floorplanId: 'mock-floorplan-101-b1' }),
-]
+function mapBuildingFloors(building, fallbackBuildingId) {
+    if (!building?.floors?.length) {
+        return []
+    }
+
+    return [...building.floors]
+        .sort((a, b) => b.level - a.level)
+        .map((floor) => createFloorViewModel({
+            buildingId: building.id || fallbackBuildingId || 'new-building',
+            level: floor.level,
+            name: floor.name || formatFloorLabel(floor.level),
+            hasMap: Boolean(floor.floorplanImageUrl),
+            floorId: floor.floorId || floor.id,
+            floorplanId: floor.floorplanId,
+            floorplanImageUrl: floor.floorplanImageUrl,
+            analysisCompleted: floor.analysisCompleted,
+        }))
+}
 
 const SummaryCard = styled.div`
     background: var(--white);
@@ -137,39 +141,79 @@ export default function BuildingDetailPage() {
     const { buildingId } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
+    const [searchParams] = useSearchParams()
+    const [submittedBuilding, setSubmittedBuilding] = useState(location.state?.building || null)
+    const [floors, setFloors] = useState(() => mapBuildingFloors(location.state?.building, buildingId))
+    const [activeFloorLevel, setActiveFloorLevel] = useState(() => mapBuildingFloors(location.state?.building, buildingId)[0]?.level ?? null)
+    const [loading, setLoading] = useState(!location.state?.building?.floors?.length)
+    const [error, setError] = useState('')
 
-    const submittedBuilding = location.state?.building
-    const [floors, setFloors] = useState(() => {
-        if (submittedBuilding?.floors == null) {
-            return fallbackFloors
-        }
-
-        return [...submittedBuilding.floors]
-            .sort((a, b) => b.level - a.level)
-            .map((floor) => createFloorViewModel({
-                buildingId: submittedBuilding.id || buildingId || 'new-building',
-                level: floor.level,
-                name: formatFloorLabel(floor.level),
-                hasMap: Boolean(floor.floorplanImageUrl),
-                floorId: floor.floorId || floor.id,
-                floorplanId: floor.floorplanId,
-                floorplanImageUrl: floor.floorplanImageUrl,
-            }))
-    })
-    const [activeFloorLevel, setActiveFloorLevel] = useState(() => floors[0]?.level ?? 1)
-
-    const buildingName = submittedBuilding?.name || (buildingId === '101' ? '신공학관' : '새 건물')
-    const activeFloor = floors.find((floor) => floor.level === activeFloorLevel) || floors[0]
+    const tenantId = submittedBuilding?.tenantId || searchParams.get('tenantId')
+    const buildingName = submittedBuilding?.name || '건물'
+    const activeFloor = floors.find((floor) => floor.level === activeFloorLevel) || floors[0] || null
     const uploadedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl)).length
     const totalFloorCount = floors.length
+    const analyzedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl) && floor.analysisCompleted).length
+
+    useEffect(() => {
+        if (!buildingId || !tenantId) {
+            if (!tenantId) {
+                setError('건물 정보를 다시 불러오려면 tenantId가 필요합니다. 건물 목록에서 다시 진입해주세요.')
+            }
+            setLoading(false)
+            return
+        }
+
+        if (submittedBuilding?.floors?.length) {
+            const mappedFloors = mapBuildingFloors(submittedBuilding, buildingId)
+            setFloors(mappedFloors)
+            setActiveFloorLevel((current) => current ?? mappedFloors[0]?.level ?? null)
+            setLoading(false)
+            return
+        }
+
+        let isCancelled = false
+
+        async function fetchBuilding() {
+            setLoading(true)
+            setError('')
+
+            try {
+                const building = await getBuildingByIdApi(tenantId, buildingId)
+                if (isCancelled) return
+
+                const mappedFloors = mapBuildingFloors(building, buildingId)
+                setSubmittedBuilding(building)
+                setFloors(mappedFloors)
+                setActiveFloorLevel(mappedFloors[0]?.level ?? null)
+            } catch (err) {
+                if (isCancelled) return
+                setError(err.message || '건물 상세 정보를 불러오는 중 오류가 발생했습니다.')
+            } finally {
+                if (!isCancelled) {
+                    setLoading(false)
+                }
+            }
+        }
+
+        fetchBuilding()
+
+        return () => {
+            isCancelled = true
+        }
+    }, [buildingId, submittedBuilding, tenantId])
+
     const progressSteps = useMemo(() => {
+        const isUploadComplete = totalFloorCount > 0 && uploadedFloorCount === totalFloorCount
+        const isAnalysisComplete = isUploadComplete && analyzedFloorCount === uploadedFloorCount
+
         return [
             { done: totalFloorCount > 0, label: '층 준비' },
-            { done: totalFloorCount > 0 && uploadedFloorCount === totalFloorCount, label: '도면 업로드' },
-            { done: false, label: 'AI 분석' },
-            { done: false, label: '맵 에디터' },
+            { done: isUploadComplete, label: '도면 업로드' },
+            { done: isAnalysisComplete, label: 'AI 분석' },
+            { done: isAnalysisComplete, label: '맵 에디터' },
         ]
-    }, [totalFloorCount, uploadedFloorCount])
+    }, [analyzedFloorCount, totalFloorCount, uploadedFloorCount])
 
     const handleFloorplanUploaded = (uploadedFloorplan) => {
         if (!activeFloor?.floorId) return
@@ -181,7 +225,18 @@ export default function BuildingDetailPage() {
                     hasMap: Boolean(uploadedFloorplan.imageUrl),
                     floorplanId: uploadedFloorplan.id,
                     floorplanImageUrl: uploadedFloorplan.imageUrl,
+                    analysisCompleted: false,
                 }
+                : floor
+        )))
+    }
+
+    const handleFloorAnalysisCompleted = (floorplanId) => {
+        if (!floorplanId) return
+
+        setFloors((current) => current.map((floor) => (
+            floor.floorplanId === floorplanId
+                ? { ...floor, analysisCompleted: true }
                 : floor
         )))
     }
@@ -202,66 +257,88 @@ export default function BuildingDetailPage() {
                     </TitleRow>
                 </HeaderArea>
 
-                <SummaryCard style={{ marginBottom: '24px' }}>
-                    <h3>도면 준비</h3>
-                    <p>층별 도면을 올리고 AI 분석까지 마치면 다음 단계에서 맵 에디터로 이어집니다.</p>
-                    <MetaGrid>
-                        <MetaCard>
-                            <span className="label">등록된 층</span>
-                            <span className="value">{totalFloorCount}개</span>
-                        </MetaCard>
-                        <MetaCard>
-                            <span className="label">업로드된 도면</span>
-                            <span className="value">{uploadedFloorCount} / {totalFloorCount}개</span>
-                        </MetaCard>
-                        <MetaCard>
-                            <span className="label">다음 단계</span>
-                            <span className="value">맵 에디터</span>
-                        </MetaCard>
-                    </MetaGrid>
-                    <ProgressRow>
-                        {progressSteps.map((step) => (
-                            <ProgressPill key={step.label} $done={step.done}>
-                                <span className="dot" />
-                                {step.label}
-                            </ProgressPill>
-                        ))}
-                    </ProgressRow>
-                </SummaryCard>
+                {loading ? (
+                    <SummaryCard style={{ marginBottom: '24px' }}>
+                        <h3>도면 준비</h3>
+                        <p>건물 정보를 불러오는 중입니다.</p>
+                    </SummaryCard>
+                ) : error ? (
+                    <SummaryCard style={{ marginBottom: '24px' }}>
+                        <h3>도면 준비</h3>
+                        <p>{error}</p>
+                    </SummaryCard>
+                ) : (
+                    <>
+                        <SummaryCard style={{ marginBottom: '24px' }}>
+                            <h3>도면 준비</h3>
+                            <p>층별 도면을 올리고 AI 분석까지 마치면 다음 단계에서 맵 에디터로 이어집니다.</p>
+                            <MetaGrid>
+                                <MetaCard>
+                                    <span className="label">등록된 층</span>
+                                    <span className="value">{totalFloorCount}개</span>
+                                </MetaCard>
+                                <MetaCard>
+                                    <span className="label">업로드된 도면</span>
+                                    <span className="value">{uploadedFloorCount} / {totalFloorCount}개</span>
+                                </MetaCard>
+                                <MetaCard>
+                                    <span className="label">다음 단계</span>
+                                    <span className="value">맵 에디터</span>
+                                </MetaCard>
+                            </MetaGrid>
+                            <ProgressRow>
+                                {progressSteps.map((step) => (
+                                    <ProgressPill key={step.label} $done={step.done}>
+                                        <span className="dot" />
+                                        {step.label}
+                                    </ProgressPill>
+                                ))}
+                            </ProgressRow>
+                        </SummaryCard>
 
-                <ContentLayout>
-                    <SidePanel>
-                        <PanelHeader>
-                            <h3>층 목록</h3>
-                            <AddFloorBtn aria-label="층 추가">+</AddFloorBtn>
-                        </PanelHeader>
-                        <FloorList>
-                            {floors.map((floor) => (
-                                <FloorItem
-                                    key={floor.floorId}
-                                    $active={activeFloorLevel === floor.level}
-                                    onClick={() => setActiveFloorLevel(floor.level)}
-                                >
-                                    {floor.name}
-                                    <StatusDot $hasMap={floor.hasMap} title={floor.hasMap ? '도면 있음' : '도면 없음'} />
-                                </FloorItem>
-                            ))}
-                        </FloorList>
-                    </SidePanel>
+                        <ContentLayout>
+                            <SidePanel>
+                                <PanelHeader>
+                                    <h3>층 목록</h3>
+                                    <AddFloorBtn aria-label="층 추가">+</AddFloorBtn>
+                                </PanelHeader>
+                                <FloorList>
+                                    {floors.map((floor) => (
+                                        <FloorItem
+                                            key={floor.floorId || `${floor.level}-${floor.name}`}
+                                            $active={activeFloorLevel === floor.level}
+                                            onClick={() => setActiveFloorLevel(floor.level)}
+                                        >
+                                            {floor.name}
+                                            <StatusDot $hasMap={floor.hasMap} title={floor.hasMap ? '도면 있음' : '도면 없음'} />
+                                        </FloorItem>
+                                    ))}
+                                </FloorList>
+                            </SidePanel>
 
-                    <MainViewer>
-                        <FloorplanUploadView
-                            key={activeFloor?.floorId || activeFloorLevel}
-                            floorName={activeFloor?.name}
-                            floorplanId={activeFloor?.floorplanId}
-                            buildingId={submittedBuilding?.id || buildingId}
-                            floorId={activeFloor?.floorId}
-                            imageUrl={activeFloor?.floorplanImageUrl}
-                            tenantId={submittedBuilding?.tenantId}
-                            onFloorplanUploaded={handleFloorplanUploaded}
-                        />
-                    </MainViewer>
-                </ContentLayout>
+                            <MainViewer>
+                                {activeFloor ? (
+                                    <FloorplanUploadView
+                                        key={activeFloor.floorId || activeFloorLevel}
+                                        floorName={activeFloor.name}
+                                        floorplanId={activeFloor.floorplanId}
+                                        buildingId={submittedBuilding?.id || buildingId}
+                                        floorId={activeFloor.floorId}
+                                        imageUrl={activeFloor.floorplanImageUrl}
+                                        tenantId={tenantId}
+                                        onFloorplanUploaded={handleFloorplanUploaded}
+                                        onAnalysisCompleted={handleFloorAnalysisCompleted}
+                                    />
+                                ) : (
+                                    <SummaryCard>
+                                        <h3>층 정보 없음</h3>
+                                        <p>이 건물에는 아직 등록된 층 정보가 없습니다.</p>
+                                    </SummaryCard>
+                                )}
+                            </MainViewer>
+                        </ContentLayout>
+                    </>
+                )}
             </Container>
         </PageWrapper>
     )

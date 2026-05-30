@@ -216,25 +216,42 @@ export default function CalibrationModal({
     onSave,
 }) {
     const [mapping, setMapping] = useState({})
+    const [mappingError, setMappingError] = useState('')
 
     useEffect(() => {
         if (isOpen) {
             setMapping(initialMapping || {})
+            setMappingError('')
         }
     }, [isOpen, initialMapping])
 
     if (!isOpen) return null
 
     const handleSelectChange = (gateId, entranceId) => {
+        setMappingError('')
         setMapping(prev => ({
             ...prev,
             [gateId]: entranceId || null
         }))
     }
 
-    const isAllMapped = actualGates.every(gate => mapping[gate.id] != null)
+    const selectedEntranceIds = actualGates
+        .map((gate) => mapping[gate.id])
+        .filter((entranceId) => entranceId != null && entranceId !== '')
+    const hasDuplicateMappings = selectedEntranceIds.length !== new Set(selectedEntranceIds).size
+    const isAllMapped = actualGates.every(gate => mapping[gate.id] != null) && !hasDuplicateMappings
 
     const handleSave = () => {
+        if (hasDuplicateMappings) {
+            setMappingError('같은 도면 출입구는 하나의 Gate에만 연결할 수 있습니다.')
+            return
+        }
+
+        if (!actualGates.every(gate => mapping[gate.id] != null)) {
+            setMappingError('모든 실제 출입구를 매핑해야 합니다.')
+            return
+        }
+
         onSave(mapping)
         onClose()
     }
@@ -294,11 +311,17 @@ export default function CalibrationModal({
                                                     $error={!currentMapped}
                                                 >
                                                     <option value="">도면 상 출입구 선택 (필수)</option>
-                                                    {detectedEntrances.map(ent => (
-                                                        <option key={ent.id} value={ent.id}>
+                                                    {detectedEntrances.map(ent => {
+                                                        const isChosenByAnotherGate = actualGates.some(
+                                                            (otherGate) => otherGate.id !== gate.id && mapping[otherGate.id] === ent.id
+                                                        )
+
+                                                        return (
+                                                        <option key={ent.id} value={ent.id} disabled={isChosenByAnotherGate}>
                                                             {ent.label || `출입구 (${Math.round(ent.bboxPx[0])}, ${Math.round(ent.bboxPx[1])})`}
                                                         </option>
-                                                    ))}
+                                                        )
+                                                    })}
                                                 </Select>
                                             </DropdownWrapper>
                                         </MappingRow>
@@ -318,7 +341,9 @@ export default function CalibrationModal({
                                     <line x1="12" y1="9" x2="12" y2="13"></line>
                                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                                 </svg>
-                                모든 실제 출입구를 매핑해야 합니다.
+                                {mappingError || (hasDuplicateMappings
+                                    ? '같은 도면 출입구를 여러 Gate에 연결할 수 없습니다.'
+                                    : '모든 실제 출입구를 매핑해야 합니다.')}
                             </WarningBadge>
                         </div>
                     )}

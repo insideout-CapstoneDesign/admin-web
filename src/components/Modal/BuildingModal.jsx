@@ -24,7 +24,7 @@ const buildingSchema = z.object({
     entranceCount: z.coerce.number().int().min(0, '출입구 개수는 0 이상이어야 합니다.'),
     basementFloorCount: z.coerce.number().int().min(0, '지하 층수는 0 이상이어야 합니다.'),
     groundFloorMax: z.coerce.number().int().min(1, '지상 끝 층은 1 이상이어야 합니다.'),
-    floors: z.array(floorSchema),
+    floors: z.array(floorSchema).min(1,'최소 1개 층을 생성해주세요.'),
 })
 
 const defaultValues = {
@@ -289,9 +289,18 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenant
     })
     const campusRequiresFloorplan = Boolean(campus?.requiresFloorplan)
     const flowDescription = useMemo(() => {
+        if (!campusRequiresFloorplan) {
+            return {
+                badge: '기본 등록',
+                variant: 'manual',
+                title: '건물 기본 정보와 층 구조를 먼저 등록합니다.',
+                description: '이 화면에서는 건물 기본 정보와 층 구조만 저장합니다. 저장 후에는 건물 상세에서 필요한 정보를 확인하고, 이후 단계에서 출입구 매핑과 활성화를 진행합니다.',
+            }
+        }
+
         return {
-            badge: campusRequiresFloorplan ? '도면 기반' : '기본 등록',
-            variant: campusRequiresFloorplan ? 'floorplan' : 'manual',
+            badge: '도면 기반',
+            variant: 'floorplan',
             title: '건물 등록 후 층별 도면 업로드와 AI 분석을 진행합니다.',
             description: '이 화면에서는 건물 기본 정보와 층 구조만 먼저 저장합니다. 저장 후 각 층 도면을 업로드하고, 층별 AI 분석을 완료한 뒤 맵 에디터에서 출입구 매핑과 활성화를 진행합니다.',
         }

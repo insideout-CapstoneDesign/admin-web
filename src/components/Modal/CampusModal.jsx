@@ -566,10 +566,22 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, init
                 title: gate.name || `Gate ${index + 1}`,
             })
 
+            const labelContent = document.createElement('div')
+            labelContent.style.padding = '6px 10px'
+            labelContent.style.fontSize = '12px'
+            labelContent.style.fontWeight = '600'
+            labelContent.style.background = '#fff'
+            labelContent.style.border = '1px solid #94a3b8'
+            labelContent.style.borderRadius = '0'
+            labelContent.style.minWidth = '120px'
+            labelContent.style.textAlign = 'center'
+            labelContent.style.boxShadow = '0 4px 10px rgba(15,23,42,0.08)'
+            labelContent.textContent = gate.name || `Gate ${index + 1}`
+
             const label = new window.kakao.maps.CustomOverlay({
                 position: pos,
                 yAnchor: 1.7,
-                content: `<div style="padding:6px 10px;font-size:12px;font-weight:600;background:#fff;border:1px solid #94a3b8;border-radius:0;min-width:120px;text-align:center;box-shadow:0 4px 10px rgba(15,23,42,0.08);">${gate.name || `Gate ${index + 1}`}</div>`,
+                content: labelContent,
                 zIndex: 4,
             })
             label.setMap(mapInstance.current)

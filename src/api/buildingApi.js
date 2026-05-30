@@ -1,9 +1,6 @@
 import { handleSessionExpired, isUnauthorizedResponse } from '../utils/authSession'
 
-const BASE_URL =
-    import.meta.env.VITE_API_BASE_URL?.trim() ||
-    import.meta.env.VITE_AI_API_BASE_URL?.trim() ||
-    'http://localhost:8080'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8080'
 
 async function parseJsonSafe(response) {
     try {
@@ -91,6 +88,12 @@ async function requestMultipartApi(path, formData) {
 
 export async function getBuildingsApi(tenantId) {
     return requestApi(`/api/v1/buildings?tenantId=${tenantId}`, {
+        method: 'GET',
+    })
+}
+
+export async function getBuildingByIdApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/buildings/${buildingId}?tenantId=${tenantId}`, {
         method: 'GET',
     })
 }

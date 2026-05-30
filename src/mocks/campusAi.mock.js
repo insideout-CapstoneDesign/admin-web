@@ -55,6 +55,20 @@ export function createMockCampusAiResult({
 } = {}) {
     const resolvedWidth = imageWidth || width
     const resolvedHeight = imageHeight || height
+    const scaleX = resolvedWidth / width
+    const scaleY = resolvedHeight / height
+
+    const scaledDetections = mockCampusDetections.map((detection) => ({
+        ...detection,
+        bboxPx: Array.isArray(detection.bboxPx) && detection.bboxPx.length === 4
+            ? [
+                Math.round(detection.bboxPx[0] * scaleX),
+                Math.round(detection.bboxPx[1] * scaleY),
+                Math.round(detection.bboxPx[2] * scaleX),
+                Math.round(detection.bboxPx[3] * scaleY),
+            ]
+            : detection.bboxPx,
+    }))
 
     return {
         jobId: `mock-job-${campusMapId}`,
@@ -63,7 +77,7 @@ export function createMockCampusAiResult({
         source: 'mock',
         imageWidth: resolvedWidth,
         imageHeight: resolvedHeight,
-        detectionCount: mockCampusDetections.length,
-        detections: mockCampusDetections,
+        detectionCount: scaledDetections.length,
+        detections: scaledDetections,
     }
 }

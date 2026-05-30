@@ -20,7 +20,10 @@ export function handleSessionExpired(message = '로그인 세션이 만료되었
 }
 
 export function isUnauthorizedResponse(response, payload) {
-    if (response?.status === 401) {
+    if (response?.status !== 401) {
+        return false
+    }
+    if(payload == null){
         return true
     }
 

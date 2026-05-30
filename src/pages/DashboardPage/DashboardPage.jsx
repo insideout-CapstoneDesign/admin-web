@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
     // Dynamic Stats
     const totalTenants = tenants.length
-    const totalVisitors = tenants.reduce((acc, cur) => acc + (cur.visitors ?? 45), 0)
+    const totalVisitors = tenants.reduce((acc, cur) => acc + (cur.visitors ?? 0), 0)
 
     return (
         <PageWrapper>
@@ -120,8 +120,8 @@ export default function DashboardPage() {
                                         <Td style={{ fontWeight: 'var(--fw-bold)', color: 'var(--black-900)' }}>
                                             {item.displayName}
                                         </Td>
-                                        <Td>{item.buildingCount ?? 5}개</Td>
-                                        <Td>{item.visitors ?? 45}명</Td>
+                                        <Td>{item.buildingCount ?? 0}개</Td>
+                                        <Td>{item.visitors ?? 0}명</Td>
                                         <Td>
                                             <StatusBadge $status={getStatusLabel(item.status)}>{getStatusLabel(item.status)}</StatusBadge>
                                         </Td>

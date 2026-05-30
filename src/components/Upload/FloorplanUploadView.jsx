@@ -678,6 +678,7 @@ export default function FloorplanUploadView({
     tenantId = null,
     campus = null,
     onFloorplanUploaded = null,
+    onAnalysisCompleted = null,
 }) {
     const [isDragging, setIsDragging] = useState(false)
     const [previewUrl, setPreviewUrl] = useState(campus?.currentMapImageUrl || imageUrl || null)
@@ -853,6 +854,9 @@ export default function FloorplanUploadView({
                 
                 if (isMounted && result) {
                     setAnalysisResult(result)
+                    if (!isCampus && typeof onAnalysisCompleted === 'function' && activeFloorplanId) {
+                        onAnalysisCompleted(activeFloorplanId)
+                    }
                     
                     const currentImgUrl = isCampus ? campus?.currentMapImageUrl : imageUrl
                     if (currentImgUrl) {
@@ -1107,6 +1111,9 @@ export default function FloorplanUploadView({
 
             setAnalysisResult(result)
             setSelectedDetectionId(result.detections[0]?.id || null)
+            if (!isCampus && typeof onAnalysisCompleted === 'function' && activeFloorplanId) {
+                onAnalysisCompleted(activeFloorplanId)
+            }
             setStatus('preview')
         } catch (error) {
             setStatus('preview')
@@ -1174,7 +1181,7 @@ export default function FloorplanUploadView({
                 </ActionRow>
             </Header>
 
-            {previewUrl && (
+            {previewUrl && actualGates.length > 0 && (
                 <CalibrationBanner $isCalibrated={isCalibrated}>
                     <div className="message">
                         {isCalibrated ? (
