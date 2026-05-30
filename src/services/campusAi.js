@@ -1,4 +1,4 @@
-import { createMockAiAnalysisResult } from '../mocks/aiAnalysis.mock'
+import { createMockCampusAiResult } from '../mocks/campusAi.mock'
 
 const MOCK_DELAY_MS = 1200
 
@@ -25,18 +25,17 @@ function normalizeDetection(detection, index) {
     }
 }
 
-function normalizeAiAnalysisResult(payload, fallbackMeta) {
+function normalizeCampusAiResult(payload, fallbackMeta) {
     const data = payload?.result || payload
     const detections = Array.isArray(data?.detections)
         ? data.detections.map(normalizeDetection)
         : []
 
     return {
-        jobId: data?.jobId || data?.job_id || `job-${fallbackMeta.floorplanId}`,
-        floorplanId: data?.floorplanId || data?.floorplan_id || fallbackMeta.floorplanId,
+        jobId: data?.jobId || data?.job_id || `job-${fallbackMeta.campusMapId}`,
+        campusMapId: data?.campusMapId || data?.campus_map_id || fallbackMeta.campusMapId,
         status: data?.status || 'succeeded',
         source: fallbackMeta.source,
-        floorName: fallbackMeta.floorName,
         imageWidth: data?.imageWidth || data?.image_width || fallbackMeta.imageWidth,
         imageHeight: data?.imageHeight || data?.image_height || fallbackMeta.imageHeight,
         detectionCount: data?.detectionCount || data?.detection_count || detections.length,
@@ -44,9 +43,8 @@ function normalizeAiAnalysisResult(payload, fallbackMeta) {
     }
 }
 
-export async function analyzeFloorplan({
-    floorplanId,
-    floorName,
+export async function analyzeCampusMap({
+    campusMapId,
     tenantId,
     imageWidth,
     imageHeight,
@@ -56,21 +54,20 @@ export async function analyzeFloorplan({
     const useMock = import.meta.env.VITE_USE_MOCK_AI !== 'false'
 
     const fallbackMeta = {
-        floorplanId: floorplanId || 'preview-only-floorplan',
-        floorName: floorName || '도면',
+        campusMapId: campusMapId || 'preview-only-campus-map',
         imageWidth,
         imageHeight,
         source: 'mock',
     }
 
-    if (useMock || !baseUrl || !floorplanId || !tenantId) {
+    if (useMock || !baseUrl || !campusMapId) {
         await sleep(MOCK_DELAY_MS)
-        return createMockAiAnalysisResult(fallbackMeta)
+        return createMockCampusAiResult(fallbackMeta)
     }
 
     try {
         const token = localStorage.getItem('accessToken')
-        const response = await fetch(`${baseUrl}/api/v1/ai/floorplans/${floorplanId}/analyze?tenantId=${tenantId}`, {
+        const response = await fetch(`${baseUrl}/api/v1/ai/campuses/${campusMapId}/analyze?tenantId=${tenantId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -83,7 +80,7 @@ export async function analyzeFloorplan({
         }
 
         const payload = await response.json()
-        return normalizeAiAnalysisResult(payload, {
+        return normalizeCampusAiResult(payload, {
             ...fallbackMeta,
             source: 'api',
         })
@@ -94,34 +91,27 @@ export async function analyzeFloorplan({
 
         await sleep(400)
         return {
-            ...createMockAiAnalysisResult(fallbackMeta),
+            ...createMockCampusAiResult(fallbackMeta),
             source: 'mock-fallback',
         }
     }
 }
 
-export async function getFloorplanDetections({
-    floorplanId,
+export async function getCampusDetections({
+    campusMapId,
     tenantId,
-    floorName,
     allowMockFallback = true,
 } = {}) {
     const baseUrl = import.meta.env.VITE_AI_API_BASE_URL?.trim() || import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8080'
     const useMock = import.meta.env.VITE_USE_MOCK_AI !== 'false'
 
-    const fallbackMeta = {
-        floorplanId,
-        floorName: floorName || '도면',
-        source: 'mock',
-    }
-
-    if (useMock || !baseUrl || !floorplanId || !tenantId) {
-        return createMockAiAnalysisResult(fallbackMeta)
+    if (useMock || !baseUrl || !campusMapId) {
+        return createMockCampusAiResult({ campusMapId })
     }
 
     try {
         const token = localStorage.getItem('accessToken')
-        const response = await fetch(`${baseUrl}/api/v1/ai/floorplans/${floorplanId}/detections?tenantId=${tenantId}`, {
+        const response = await fetch(`${baseUrl}/api/v1/ai/campuses/${campusMapId}/detections?tenantId=${tenantId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -129,26 +119,18 @@ export async function getFloorplanDetections({
         })
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch floorplan detections with status ${response.status}`)
+            throw new Error(`Failed to fetch campus detections with status ${response.status}`)
         }
 
         const payload = await response.json()
-        const listData = payload?.result || payload
-        
-        const wrappedPayload = {
-            floorplanId,
-            status: 'succeeded',
-            detections: Array.isArray(listData) ? listData : []
-        }
-
-        return normalizeAiAnalysisResult(wrappedPayload, {
-            ...fallbackMeta,
+        return normalizeCampusAiResult(payload, {
+            campusMapId,
             source: 'api',
         })
     } catch (error) {
         if (!allowMockFallback) {
             throw error
         }
-        return createMockAiAnalysisResult(fallbackMeta)
+        return createMockCampusAiResult({ campusMapId })
     }
 }
