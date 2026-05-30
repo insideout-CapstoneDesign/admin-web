@@ -1,4 +1,5 @@
 import { createMockCampusAiResult } from '../mocks/campusAi.mock'
+import { handleSessionExpired, isUnauthorizedResponse } from '../utils/authSession'
 
 const MOCK_DELAY_MS = 1200
 
@@ -6,6 +7,14 @@ function sleep(ms) {
     return new Promise((resolve) => {
         window.setTimeout(resolve, ms)
     })
+}
+
+async function parseJsonSafe(response) {
+    try {
+        return await response.json()
+    } catch {
+        return null
+    }
 }
 
 function normalizeDetection(detection, index) {
@@ -75,11 +84,21 @@ export async function analyzeCampusMap({
             },
         })
 
+        const payload = await parseJsonSafe(response)
+
+        if (isUnauthorizedResponse(response, payload)) {
+            handleSessionExpired()
+            throw new Error('로그인 세션이 만료되었습니다.')
+        }
+
         if (!response.ok) {
             throw new Error(`AI analysis request failed with status ${response.status}`)
         }
 
-        const payload = await response.json()
+        if (payload == null) {
+            throw new Error('캠퍼스 AI 응답을 해석할 수 없습니다.')
+        }
+
         return normalizeCampusAiResult(payload, {
             ...fallbackMeta,
             source: 'api',
@@ -118,11 +137,19 @@ export async function getCampusDetections({
             },
         })
 
+        const payload = await parseJsonSafe(response)
+
+        if (isUnauthorizedResponse(response, payload)) {
+            handleSessionExpired()
+            throw new Error('로그인 세션이 만료되었습니다.')
+        }
+
         if (!response.ok) {
             throw new Error(`Failed to fetch campus detections with status ${response.status}`)
         }
-
-        const payload = await response.json()
+        if (payload == null) {
+            throw new Error('캠퍼스 검출 결과 응답을 해석할 수 없습니다.')
+        }
         return normalizeCampusAiResult(payload, {
             campusMapId,
             source: 'api',

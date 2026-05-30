@@ -1,3 +1,5 @@
+import { handleSessionExpired, isUnauthorizedResponse } from '../utils/authSession'
+
 const BASE_URL =
     import.meta.env.VITE_API_BASE_URL?.trim() ||
     import.meta.env.VITE_AI_API_BASE_URL?.trim() ||
@@ -32,6 +34,11 @@ async function requestApi(path, { method = 'GET', body = null, isMultipart = fal
     const payload = await parseJsonSafe(response)
     const isSuccess = payload?.isSuccess
 
+    if (isUnauthorizedResponse(response, payload)) {
+        handleSessionExpired()
+        throw new Error('로그인 세션이 만료되었습니다.')
+    }
+
     if (!response.ok) {
         throw new Error(payload?.message || '요청 처리 중 오류가 발생했습니다.')
     }
@@ -50,6 +57,13 @@ async function requestApi(path, { method = 'GET', body = null, isMultipart = fal
 export async function createCampusApi(tenantId, campusData) {
     return requestApi(`/api/v1/campuses?tenantId=${tenantId}`, {
         method: 'POST',
+        body: campusData,
+    })
+}
+
+export async function updateCampusApi(tenantId, campusId, campusData) {
+    return requestApi(`/api/v1/campuses/${campusId}?tenantId=${tenantId}`, {
+        method: 'PUT',
         body: campusData,
     })
 }
