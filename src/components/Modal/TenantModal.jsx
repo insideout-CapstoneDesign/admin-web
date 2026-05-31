@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Button from '../Button/Button'
+import { createTenantApi } from '../../api/tenantApi'
 
 // --- Zod Schema ---
 const tenantSchema = z.object({
@@ -121,7 +122,7 @@ const Footer = styled.div`
     margin-top: 32px;
 `
 
-export default function TenantModal({ isOpen, onClose }) {
+export default function TenantModal({ isOpen, onClose, onSuccess }) {
     const {
         register,
         handleSubmit,
@@ -141,10 +142,21 @@ export default function TenantModal({ isOpen, onClose }) {
 
     if (!isOpen) return null
 
-    const onSubmit = (data) => {
-        // TODO: 백엔드 API 호출 (POST /api/v1/tenants)
-        console.log('단지 등록 완료:', data)
-        onClose() // 임시로 등록 후 모달 닫기
+    const onSubmit = async (data) => {
+        try {
+            await createTenantApi({
+                name: data.name,
+                slug: data.slug,
+            })
+            alert('단지가 성공적으로 등록되었습니다.')
+            if (onSuccess) {
+                onSuccess()
+            }
+            onClose()
+        } catch (err) {
+            console.error('단지 등록 실패:', err)
+            alert('단지 등록 중 오류가 발생했습니다: ' + err.message)
+        }
     }
 
     const handleOverlayClick = (e) => {

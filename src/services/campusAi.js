@@ -1,4 +1,4 @@
-import { createMockAiAnalysisResult } from '../mocks/aiAnalysis.mock'
+import { createMockCampusAiResult } from '../mocks/campusAi.mock'
 import { handleSessionExpired, isUnauthorizedResponse } from '../utils/authSession'
 
 const MOCK_DELAY_MS = 1200
@@ -34,18 +34,17 @@ function normalizeDetection(detection, index) {
     }
 }
 
-function normalizeAiAnalysisResult(payload, fallbackMeta) {
+function normalizeCampusAiResult(payload, fallbackMeta) {
     const data = payload?.result || payload
     const detections = Array.isArray(data?.detections)
         ? data.detections.map(normalizeDetection)
         : []
 
     return {
-        jobId: data?.jobId || data?.job_id || `job-${fallbackMeta.floorplanId}`,
-        floorplanId: data?.floorplanId || data?.floorplan_id || fallbackMeta.floorplanId,
+        jobId: data?.jobId || data?.job_id || `job-${fallbackMeta.campusMapId}`,
+        campusMapId: data?.campusMapId || data?.campus_map_id || fallbackMeta.campusMapId,
         status: data?.status || 'succeeded',
         source: fallbackMeta.source,
-        floorName: fallbackMeta.floorName,
         imageWidth: data?.imageWidth || data?.image_width || fallbackMeta.imageWidth,
         imageHeight: data?.imageHeight || data?.image_height || fallbackMeta.imageHeight,
         detectionCount: data?.detectionCount || data?.detection_count || detections.length,
@@ -59,9 +58,8 @@ function createSessionExpiredError() {
     return error
 }
 
-export async function analyzeFloorplan({
-    floorplanId,
-    floorName,
+export async function analyzeCampusMap({
+    campusMapId,
     tenantId,
     imageWidth,
     imageHeight,
@@ -71,21 +69,20 @@ export async function analyzeFloorplan({
     const useMock = import.meta.env.VITE_USE_MOCK_AI !== 'false'
 
     const fallbackMeta = {
-        floorplanId: floorplanId || 'preview-only-floorplan',
-        floorName: floorName || '도면',
+        campusMapId: campusMapId || 'preview-only-campus-map',
         imageWidth,
         imageHeight,
         source: 'mock',
     }
 
-    if (useMock || !baseUrl || !floorplanId || !tenantId) {
+    if (useMock || !baseUrl || !campusMapId || !tenantId) {
         await sleep(MOCK_DELAY_MS)
-        return createMockAiAnalysisResult(fallbackMeta)
+        return createMockCampusAiResult(fallbackMeta)
     }
 
     try {
         const token = localStorage.getItem('accessToken')
-        const response = await fetch(`${baseUrl}/api/v1/ai/floorplans/${floorplanId}/analyze?tenantId=${tenantId}`, {
+        const response = await fetch(`${baseUrl}/api/v1/ai/campuses/${campusMapId}/analyze?tenantId=${tenantId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -105,10 +102,10 @@ export async function analyzeFloorplan({
         }
 
         if (payload == null) {
-            throw new Error('AI 분석 응답을 해석할 수 없습니다.')
+            throw new Error('캠퍼스 AI 응답을 해석할 수 없습니다.')
         }
 
-        return normalizeAiAnalysisResult(payload, {
+        return normalizeCampusAiResult(payload, {
             ...fallbackMeta,
             source: 'api',
         })
@@ -123,34 +120,27 @@ export async function analyzeFloorplan({
 
         await sleep(400)
         return {
-            ...createMockAiAnalysisResult(fallbackMeta),
+            ...createMockCampusAiResult(fallbackMeta),
             source: 'mock-fallback',
         }
     }
 }
 
-export async function getFloorplanDetections({
-    floorplanId,
+export async function getCampusDetections({
+    campusMapId,
     tenantId,
-    floorName,
     allowMockFallback = true,
 } = {}) {
     const baseUrl = import.meta.env.VITE_AI_API_BASE_URL?.trim() || import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:8080'
     const useMock = import.meta.env.VITE_USE_MOCK_AI !== 'false'
 
-    const fallbackMeta = {
-        floorplanId,
-        floorName: floorName || '도면',
-        source: 'mock',
-    }
-
-    if (useMock || !baseUrl || !floorplanId || !tenantId) {
-        return createMockAiAnalysisResult(fallbackMeta)
+    if (useMock || !baseUrl || !campusMapId || !tenantId) {
+        return createMockCampusAiResult({ campusMapId })
     }
 
     try {
         const token = localStorage.getItem('accessToken')
-        const response = await fetch(`${baseUrl}/api/v1/ai/floorplans/${floorplanId}/detections?tenantId=${tenantId}`, {
+        const response = await fetch(`${baseUrl}/api/v1/ai/campuses/${campusMapId}/detections?tenantId=${tenantId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -165,21 +155,13 @@ export async function getFloorplanDetections({
         }
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch floorplan detections with status ${response.status}`)
+            throw new Error(`Failed to fetch campus detections with status ${response.status}`)
         }
         if (payload == null) {
-            throw new Error('도면 검출 결과 응답을 해석할 수 없습니다.')
+            throw new Error('캠퍼스 검출 결과 응답을 해석할 수 없습니다.')
         }
-        const listData = payload?.result || payload
-        
-        const wrappedPayload = {
-            floorplanId,
-            status: 'succeeded',
-            detections: Array.isArray(listData) ? listData : []
-        }
-
-        return normalizeAiAnalysisResult(wrappedPayload, {
-            ...fallbackMeta,
+        return normalizeCampusAiResult(payload, {
+            campusMapId,
             source: 'api',
         })
     } catch (error) {
@@ -190,6 +172,6 @@ export async function getFloorplanDetections({
         if (!allowMockFallback) {
             throw error
         }
-        return createMockAiAnalysisResult(fallbackMeta)
+        return createMockCampusAiResult({ campusMapId })
     }
 }

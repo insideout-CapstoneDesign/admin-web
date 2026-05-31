@@ -32,16 +32,20 @@ const Title = styled.span`
 
 export default function Header() {
     const navigate = useNavigate()
+    const goToHome = () => {
+        const accessToken = localStorage.getItem('accessToken')
+        navigate(accessToken ? '/dashboard' : '/')
+    }
 
     return (
         <StyledHeader
             role="button"
             tabIndex={0}
-            onClick={() => navigate('/')}
+            onClick={goToHome}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    navigate('/')
+                    goToHome()
                 }
             }}
         >

@@ -5,7 +5,7 @@ const mockDetections = [
         confidence: 0.98,
         label: '복도 벽체',
         ocrText: null,
-        bboxPx: [180, 120, 1280, 180],
+        bboxPx: [180, 120, 1100, 60],
         status: 'pending',
     },
     {
@@ -14,7 +14,7 @@ const mockDetections = [
         confidence: 0.91,
         label: '101호',
         ocrText: '101',
-        bboxPx: [320, 280, 440, 340],
+        bboxPx: [320, 280, 120, 60],
         status: 'pending',
     },
     {
@@ -23,7 +23,7 @@ const mockDetections = [
         confidence: 0.88,
         label: '엘리베이터',
         ocrText: null,
-        bboxPx: [920, 360, 1020, 460],
+        bboxPx: [920, 360, 100, 100],
         status: 'pending',
     },
     {
@@ -32,7 +32,7 @@ const mockDetections = [
         confidence: 0.84,
         label: '출입문 후보',
         ocrText: null,
-        bboxPx: [720, 240, 800, 320],
+        bboxPx: [720, 240, 80, 80],
         status: 'pending',
     },
     {
@@ -41,7 +41,7 @@ const mockDetections = [
         confidence: 0.86,
         label: '화장실',
         ocrText: 'WC',
-        bboxPx: [1110, 540, 1200, 620],
+        bboxPx: [1110, 540, 90, 80],
         status: 'pending',
     },
 ]
@@ -50,17 +50,36 @@ export function createMockAiAnalysisResult({
     floorplanId = 'mock-floorplan-id',
     width = 1600,
     height = 900,
+    imageWidth,
+    imageHeight,
     floorName = '도면',
 } = {}) {
+    const resolvedWidth = imageWidth || width
+    const resolvedHeight = imageHeight || height
+    const scaleX = resolvedWidth / width
+    const scaleY = resolvedHeight / height
+
+    const scaledDetections = mockDetections.map((detection) => ({
+        ...detection,
+        bboxPx: Array.isArray(detection.bboxPx) && detection.bboxPx.length === 4
+            ? [
+                Math.round(detection.bboxPx[0] * scaleX),
+                Math.round(detection.bboxPx[1] * scaleY),
+                Math.round(detection.bboxPx[2] * scaleX),
+                Math.round(detection.bboxPx[3] * scaleY),
+            ]
+            : detection.bboxPx,
+    }))
+
     return {
         jobId: `mock-job-${floorplanId}`,
         floorplanId,
         status: 'succeeded',
         source: 'mock',
         floorName,
-        imageWidth: width,
-        imageHeight: height,
-        detectionCount: mockDetections.length,
-        detections: mockDetections,
+        imageWidth: resolvedWidth,
+        imageHeight: resolvedHeight,
+        detectionCount: scaledDetections.length,
+        detections: scaledDetections,
     }
 }

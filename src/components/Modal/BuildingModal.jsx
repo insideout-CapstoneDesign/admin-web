@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Button from '../Button/Button'
 import AddressSearchModal from './AddressSearchModal'
+import { createBuildingApi } from '../../api/buildingApi'
 
 const floorSchema = z.object({
     level: z.number().int().refine((value) => value !== 0, {
@@ -19,10 +20,11 @@ const buildingSchema = z.object({
     longitude: z.string().optional(),
     latitude: z.string().optional(),
     externalApiId: z.string().optional(),
+    requiresFloorplan: z.boolean(),
     entranceCount: z.coerce.number().int().min(0, '출입구 개수는 0 이상이어야 합니다.'),
     basementFloorCount: z.coerce.number().int().min(0, '지하 층수는 0 이상이어야 합니다.'),
     groundFloorMax: z.coerce.number().int().min(1, '지상 끝 층은 1 이상이어야 합니다.'),
-    floors: z.array(floorSchema).min(1, '층 목록을 1개 이상 등록해주세요.'),
+    floors: z.array(floorSchema).min(1,'최소 1개 층을 생성해주세요.'),
 })
 
 const defaultValues = {
@@ -31,6 +33,7 @@ const defaultValues = {
     longitude: '',
     latitude: '',
     externalApiId: '',
+    requiresFloorplan: false,
     entranceCount: 0,
     basementFloorCount: 0,
     groundFloorMax: 1,
@@ -219,6 +222,32 @@ const Footer = styled.div`
     margin-top: 12px;
 `
 
+const InfoCard = styled.div`
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-12, 12px);
+    background: var(--gray-50);
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--gray-600);
+
+    strong {
+        color: var(--black-900);
+    }
+`
+
+const FlowBadge = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: ${({ $variant }) => ($variant === 'floorplan' ? 'rgba(59, 130, 246, 0.10)' : 'rgba(16, 185, 129, 0.10)')};
+    color: ${({ $variant }) => ($variant === 'floorplan' ? 'var(--blue-600)' : 'var(--green-700)')};
+`
+
 function createFloorName(level) {
     return level < 0 ? `B${Math.abs(level)}` : `${level}F`
 }
@@ -241,7 +270,7 @@ function buildFloorList(basementFloorCount, groundFloorMax) {
     return floors
 }
 
-export default function BuildingModal({ isOpen, onClose, onSubmitSuccess }) {
+export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenantId, campusId, campus = null }) {
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [generatedFloors, setGeneratedFloors] = useState([])
 
@@ -258,12 +287,35 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess }) {
         mode: 'onChange',
         defaultValues,
     })
+    const campusRequiresFloorplan = Boolean(campus?.requiresFloorplan)
+    const flowDescription = useMemo(() => {
+        if (!campusRequiresFloorplan) {
+            return {
+                badge: '기본 등록',
+                variant: 'manual',
+                title: '건물 기본 정보와 층 구조를 먼저 등록합니다.',
+                description: '이 화면에서는 건물 기본 정보와 층 구조만 저장합니다. 저장 후에는 건물 상세에서 필요한 정보를 확인하고, 이후 단계에서 출입구 매핑과 활성화를 진행합니다.',
+            }
+        }
+
+        return {
+            badge: '도면 기반',
+            variant: 'floorplan',
+            title: '건물 등록 후 층별 도면 업로드와 AI 분석을 진행합니다.',
+            description: '이 화면에서는 건물 기본 정보와 층 구조만 먼저 저장합니다. 저장 후 각 층 도면을 업로드하고, 층별 AI 분석을 완료한 뒤 맵 에디터에서 출입구 매핑과 활성화를 진행합니다.',
+        }
+    }, [campusRequiresFloorplan])
 
     useEffect(() => {
         if (isOpen) {
-            reset(defaultValues)
+            reset({
+                ...defaultValues,
+                requiresFloorplan: campusRequiresFloorplan,
+                entranceCount: 0,
+            })
+            setGeneratedFloors([])
         }
-    }, [isOpen, reset])
+    }, [campusRequiresFloorplan, isOpen, reset])
 
     if (!isOpen) return null
 
@@ -288,36 +340,35 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess }) {
         setValue('floors', nextFloors, { shouldValidate: true, shouldDirty: true })
     }
 
-    const onSubmit = (data) => {
+    const onSubmit = async (data) => {
         const payload = {
             name: data.name,
             address: data.address,
-            longitude: data.longitude,
-            latitude: data.latitude,
-            externalApiId: data.externalApiId,
-            entranceCount: data.entranceCount,
-            meta: {
-                location: data.longitude && data.latitude
-                    ? {
-                        longitude: data.longitude,
-                        latitude: data.latitude,
-                    }
-                    : null,
-            },
-            floors: data.floors,
+            entranceCount: 0,
+            campusId: campusId || null,
+            requiresFloorplan: campusRequiresFloorplan,
+            externalApiId: data.externalApiId || null,
+            longitude: data.longitude || null,
+            latitude: data.latitude || null,
+            floors: data.floors.map(floor => ({
+                level: floor.level,
+                name: floor.name
+            }))
         }
 
         console.log('건물 등록 payload:', payload)
 
-        const newBuildingId = payload.externalApiId || `new-building-${payload.floors.map((floor) => floor.level).join('-')}`
-        onSubmitSuccess({
-            id: newBuildingId,
-            name: payload.name,
-            address: payload.address,
-            entranceCount: payload.entranceCount,
-            floors: payload.floors,
-        })
-        handleClose()
+        try {
+            const savedBuilding = await createBuildingApi(tenantId, payload)
+            alert('건물이 성공적으로 등록되었습니다.')
+            if (onSubmitSuccess) {
+                onSubmitSuccess(savedBuilding)
+            }
+            handleClose()
+        } catch (err) {
+            console.error('건물 등록 실패:', err)
+            alert('건물 등록 중 오류가 발생했습니다: ' + err.message)
+        }
     }
 
     const handlePlaceSelect = (place) => {
@@ -348,6 +399,27 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess }) {
                     </Header>
 
                     <Form onSubmit={handleSubmit(onSubmit, onError)}>
+                        <FieldGroup>
+                            <Label>등록 플로우</Label>
+                            <Description>건물의 진행 방식은 캠퍼스 단계에서 이미 결정된 값을 그대로 따릅니다.</Description>
+                            <InfoCard>
+                                <FlowBadge $variant={flowDescription.variant}>{flowDescription.badge}</FlowBadge>
+                                <div style={{ marginTop: '10px' }}>
+                                    <strong>{flowDescription.title}</strong>
+                                </div>
+                                <div style={{ marginTop: '6px' }}>
+                                    {flowDescription.description}
+                                </div>
+                            </InfoCard>
+                        </FieldGroup>
+
+                        {campus && (
+                            <InfoCard>
+                                <strong>{campus.name}</strong>에 등록된 Gate는 현재 {campus.gates?.length || 0}개예요.
+                                건물 등록 후에는 층별 도면 업로드와 AI 분석을 마친 다음, 맵 에디터에서 이 Gate들과 건물 출입구를 연결하게 됩니다.
+                            </InfoCard>
+                        )}
+
                         <FieldGroup>
                             <Label htmlFor="address">건물 주소</Label>
                             <InputWrapper>
@@ -382,21 +454,8 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess }) {
                         </FieldGroup>
 
                         <FieldGroup>
-                            <Label htmlFor="entranceCount">출입구 개수</Label>
-                            <Input
-                                id="entranceCount"
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                {...register('entranceCount')}
-                            />
-                            <Description>건물 엔티티의 필수값입니다. 출입구가 아직 확정되지 않았다면 0으로 두면 됩니다.</Description>
-                            {errors.entranceCount && <ErrorMessage>{errors.entranceCount.message}</ErrorMessage>}
-                        </FieldGroup>
-
-                        <FieldGroup>
                             <Label>층 구조 설정</Label>
-                            <Description>지하 시작 층수와 지상 끝 층수를 입력한 뒤 자동 생성하고, 실제 없는 층은 태그에서 제거하세요.</Description>
+                            <Description>층 정보는 건물 기본 구조라서 항상 먼저 저장됩니다. 지하 시작 층수와 지상 끝 층수를 입력한 뒤 자동 생성하고, 실제 없는 층은 태그에서 제거하세요.</Description>
                             <RangeRow>
                                 <FieldGroup>
                                     <Label htmlFor="basementFloorCount">지하 층수</Label>
@@ -450,6 +509,13 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess }) {
 
                             {errors.floors && <ErrorMessage>{errors.floors.message}</ErrorMessage>}
                         </FieldGroup>
+
+                        {!campusRequiresFloorplan && (
+                            <InfoCard>
+                                <strong>도면 없는 건물 흐름</strong><br />
+                                층 정보는 먼저 저장되지만, 바로 도면 업로드로 가지 않고 1층 출입구를 수동으로 만들고 Campus Gate와 연결하는 단계로 이동하게 됩니다.
+                            </InfoCard>
+                        )}
 
                         <Footer>
                             <Button type="button" variant="secondary" onClick={handleClose}>
