@@ -189,7 +189,7 @@ export default function TenantDetailPage() {
     const loadCampus = async () => {
         setLoading(true)
         setError('')
-        setActiveTab('map')
+        setActiveTab(null)
         try {
             const campuses = await getCampusesApi(tenantId)
             if (campuses && campuses.length > 0) {
@@ -197,9 +197,12 @@ export default function TenantDetailPage() {
                 setActiveTab('buildings')
             } else {
                 setCampus(null)
+                setActiveTab('map')
             }
         } catch (err) {
             console.error(err)
+            setCampus(null)
+            setActiveTab('map')
             setError('캠퍼스 정보를 불러오는 중 오류가 발생했습니다: ' + err.message)
         } finally {
             setLoading(false)
