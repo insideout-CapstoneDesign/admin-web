@@ -81,3 +81,9 @@ export async function uploadCampusMapApi(tenantId, campusId, file) {
         isMultipart: true,
     })
 }
+
+export async function getCampusByIdApi(tenantId, campusId) {
+    return requestApi(`/api/v1/campuses/${campusId}?tenantId=${tenantId}`, {
+        method: 'GET',
+    })
+}

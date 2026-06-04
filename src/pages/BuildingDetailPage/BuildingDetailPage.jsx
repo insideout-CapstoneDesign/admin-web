@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import FloorplanUploadView from '../../components/Upload/FloorplanUploadView'
-import { getBuildingByIdApi } from '../../api/buildingApi'
+import Button from '../../components/Button/Button'
+import { getBuildingByIdApi, initializeBuildingDraftApi, addBuildingFloorApi } from '../../api/buildingApi'
 import {
     AddFloorBtn,
     BackButton,
@@ -56,6 +57,73 @@ function mapBuildingFloors(building, fallbackBuildingId) {
             analysisCompleted: floor.analysisCompleted,
         }))
 }
+
+const ModalOverlay = styled.div`
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+`
+
+const ModalContainer = styled.div`
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-12, 12px);
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    h4 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--black-900);
+    }
+`
+
+const FormField = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gray-600);
+        text-align: left;
+    }
+
+    input {
+        padding: 10px 12px;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-8, 8px);
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+
+        &:focus {
+            border-color: var(--blue-500);
+        }
+    }
+`
+
+const ButtonRow = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+`
 
 const SummaryCard = styled.div`
     background: var(--white);
@@ -117,6 +185,20 @@ const ProgressRow = styled.div`
     gap: 10px;
 `
 
+const SummaryHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+`
+
+const SummaryHeaderCopy = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+`
+
 const ProgressPill = styled.div`
     display: inline-flex;
     align-items: center;
@@ -147,6 +229,65 @@ export default function BuildingDetailPage() {
     const [activeFloorLevel, setActiveFloorLevel] = useState(() => mapBuildingFloors(location.state?.building, buildingId)[0]?.level ?? null)
     const [loading, setLoading] = useState(!location.state?.building?.floors?.length)
     const [error, setError] = useState('')
+    const [initializingMapEditor, setInitializingMapEditor] = useState(false)
+    const [isAddFloorOpen, setIsAddFloorOpen] = useState(false)
+    const [newFloorLevel, setNewFloorLevel] = useState('')
+    const [newFloorName, setNewFloorName] = useState('')
+
+    const handleLevelChange = (val) => {
+        setNewFloorLevel(val)
+        const levelNum = parseInt(val, 10)
+        if (!isNaN(levelNum)) {
+            if (levelNum < 0) {
+                setNewFloorName(`B${Math.abs(levelNum)}`)
+            } else if (levelNum > 0) {
+                setNewFloorName(`${levelNum}F`)
+            } else {
+                setNewFloorName('')
+            }
+        } else {
+            setNewFloorName('')
+        }
+    }
+
+    const handleAddFloorSubmit = async (e) => {
+        e.preventDefault()
+
+        if (!newFloorLevel || !newFloorName) {
+            window.alert('층 레벨과 이름을 입력해 주세요.')
+            return
+        }
+
+        const levelNum = parseInt(newFloorLevel, 10)
+        if (isNaN(levelNum)) {
+            window.alert('층 레벨은 숫자여야 합니다.')
+            return
+        }
+
+        try {
+            const updatedBuilding = await addBuildingFloorApi(tenantId, submittedBuilding?.id || buildingId, {
+                level: levelNum,
+                name: newFloorName.trim(),
+            })
+
+            // 빌딩 정보 및 층 목록 갱신
+            setSubmittedBuilding(updatedBuilding)
+            const mappedFloors = mapBuildingFloors(updatedBuilding, buildingId)
+            setFloors(mappedFloors)
+            
+            // 새로 추가된 층이 활성화되도록
+            setActiveFloorLevel(levelNum)
+            
+            // 모달 상태 초기화 및 닫기
+            setNewFloorLevel('')
+            setNewFloorName('')
+            setIsAddFloorOpen(false)
+            
+            window.alert('층이 성공적으로 추가되었습니다.')
+        } catch (err) {
+            window.alert(err.message || '층 추가 중 오류가 발생했습니다.')
+        }
+    }
 
     const tenantId = submittedBuilding?.tenantId || searchParams.get('tenantId')
     const buildingName = submittedBuilding?.name || '건물'
@@ -154,6 +295,7 @@ export default function BuildingDetailPage() {
     const uploadedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl)).length
     const totalFloorCount = floors.length
     const analyzedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl) && floor.analysisCompleted).length
+    const canStartMapEditor = Boolean(activeFloor?.floorId && tenantId && analyzedFloorCount > 0)
 
     useEffect(() => {
         if (!buildingId || !tenantId) {
@@ -241,6 +383,27 @@ export default function BuildingDetailPage() {
         )))
     }
 
+    const handleOpenMapEditor = async () => {
+        if (!activeFloor?.floorId || !tenantId || initializingMapEditor) {
+            return
+        }
+
+        try {
+            setInitializingMapEditor(true)
+            await initializeBuildingDraftApi(tenantId, submittedBuilding?.id || buildingId)
+            navigate(`/building/${submittedBuilding?.id || buildingId}/floors/${activeFloor.floorId}/editor?tenantId=${tenantId}`, {
+                state: {
+                    building: submittedBuilding,
+                    floor: activeFloor,
+                },
+            })
+        } catch (err) {
+            window.alert(err.message || '맵 에디터 draft를 초기화하지 못했습니다.')
+        } finally {
+            setInitializingMapEditor(false)
+        }
+    }
+
     return (
         <PageWrapper>
             <Container>
@@ -270,8 +433,19 @@ export default function BuildingDetailPage() {
                 ) : (
                     <>
                         <SummaryCard style={{ marginBottom: '24px' }}>
-                            <h3>도면 준비</h3>
-                            <p>층별 도면을 올리고 AI 분석까지 마치면 다음 단계에서 맵 에디터로 이어집니다.</p>
+                            <SummaryHeader>
+                                <SummaryHeaderCopy>
+                                    <h3>도면 준비</h3>
+                                    <p>층별 도면을 올리고 AI 분석까지 마치면 다음 단계에서 맵 에디터로 이어집니다.</p>
+                                </SummaryHeaderCopy>
+                                <Button
+                                    variant="primary"
+                                    onClick={handleOpenMapEditor}
+                                    disabled={!canStartMapEditor || initializingMapEditor}
+                                >
+                                    {initializingMapEditor ? '맵 에디터 준비 중...' : '맵 에디터 시작'}
+                                </Button>
+                            </SummaryHeader>
                             <MetaGrid>
                                 <MetaCard>
                                     <span className="label">등록된 층</span>
@@ -300,7 +474,7 @@ export default function BuildingDetailPage() {
                             <SidePanel>
                                 <PanelHeader>
                                     <h3>층 목록</h3>
-                                    <AddFloorBtn aria-label="층 추가">+</AddFloorBtn>
+                                    <AddFloorBtn aria-label="층 추가" onClick={() => setIsAddFloorOpen(true)}>+</AddFloorBtn>
                                 </PanelHeader>
                                 <FloorList>
                                     {floors.map((floor) => (
@@ -328,6 +502,9 @@ export default function BuildingDetailPage() {
                                         tenantId={tenantId}
                                         onFloorplanUploaded={handleFloorplanUploaded}
                                         onAnalysisCompleted={handleFloorAnalysisCompleted}
+                                        canOpenMapEditor={Boolean(activeFloor.analysisCompleted && activeFloor.floorId && tenantId)}
+                                        isPreparingMapEditor={initializingMapEditor}
+                                        onOpenMapEditor={handleOpenMapEditor}
                                     />
                                 ) : (
                                     <SummaryCard>
@@ -340,6 +517,45 @@ export default function BuildingDetailPage() {
                     </>
                 )}
             </Container>
+            {isAddFloorOpen && (
+                <ModalOverlay onClick={() => setIsAddFloorOpen(false)}>
+                    <ModalContainer onClick={(e) => e.stopPropagation()}>
+                        <h4>층 추가</h4>
+                        <form onSubmit={handleAddFloorSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <FormField>
+                                <label htmlFor="newFloorLevel">층 레벨 (숫자)</label>
+                                <input
+                                    id="newFloorLevel"
+                                    type="number"
+                                    placeholder="예: 2 (지하는 -1)"
+                                    value={newFloorLevel}
+                                    onChange={(e) => handleLevelChange(e.target.value)}
+                                    required
+                                />
+                            </FormField>
+                            <FormField>
+                                <label htmlFor="newFloorName">층 이름 (표시 이름)</label>
+                                <input
+                                    id="newFloorName"
+                                    type="text"
+                                    placeholder="예: 2F, B1"
+                                    value={newFloorName}
+                                    onChange={(e) => setNewFloorName(e.target.value)}
+                                    required
+                                />
+                            </FormField>
+                            <ButtonRow>
+                                <Button type="button" variant="secondary" onClick={() => setIsAddFloorOpen(false)}>
+                                    취소
+                                </Button>
+                                <Button type="submit" variant="primary">
+                                    추가
+                                </Button>
+                            </ButtonRow>
+                        </form>
+                    </ModalContainer>
+                </ModalOverlay>
+            )}
         </PageWrapper>
     )
 }

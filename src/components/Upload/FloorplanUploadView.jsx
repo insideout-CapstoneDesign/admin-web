@@ -16,6 +16,8 @@ const DETECTION_TYPE_META = {
     room: { label: '공간', color: '#dc2626', bg: 'rgba(220, 38, 38, 0.06)' },
     text: { label: '텍스트', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.12)' },
     poi_candidate: { label: 'POI 후보', color: '#059669', bg: 'rgba(5, 150, 105, 0.12)' },
+    node: { label: '노드', color: '#166534', bg: 'rgba(22, 101, 52, 0.16)' },
+    edge: { label: '엣지', color: '#6d28d9', bg: 'rgba(109, 40, 217, 0.12)' },
     door: { label: '문', color: '#ea580c', bg: 'rgba(234, 88, 12, 0.16)' },
     restroom_sign: { label: '화장실', color: '#db2777', bg: 'rgba(219, 39, 119, 0.16)' },
     elevator: { label: '엘리베이터', color: '#0891b2', bg: 'rgba(8, 145, 178, 0.16)' },
@@ -461,7 +463,14 @@ function getDetectionLabel(detection, meta) {
 function shouldShowPersistentLabel(detection, shape) {
     const type = detection.detectType || 'unknown'
 
-    if (type === 'text' || type === 'poi_candidate' || type === 'node_candidate' || type === 'edge_candidate') {
+    if (
+        type === 'text' ||
+        type === 'poi_candidate' ||
+        type === 'node_candidate' ||
+        type === 'edge_candidate' ||
+        type === 'node' ||
+        type === 'edge'
+    ) {
         return true
     }
 
@@ -595,7 +604,9 @@ function getOverlayRenderPriority(shape) {
     if (type === 'corridor') return 20
     if (type === 'door') return 24
     if (type === 'poi_candidate') return 26
+    if (type === 'edge') return 27
     if (type === 'elevator' || type === 'stair' || type === 'escalator' || type === 'restroom_sign') return 28
+    if (type === 'node') return 29
     if (type === 'wall') return 40
 
     if (shape?.kind === 'line') return 34
@@ -679,6 +690,9 @@ export default function FloorplanUploadView({
     campus = null,
     onFloorplanUploaded = null,
     onAnalysisCompleted = null,
+    canOpenMapEditor = false,
+    isPreparingMapEditor = false,
+    onOpenMapEditor = null,
 }) {
     const [isDragging, setIsDragging] = useState(false)
     const [previewUrl, setPreviewUrl] = useState(campus?.currentMapImageUrl || imageUrl || null)
@@ -1169,14 +1183,30 @@ export default function FloorplanUploadView({
                         </StatusBadge>
                     )}
                     {status === 'preview' && (
-                        <Button variant="primary" onClick={handleAiRequest} disabled={isCampus ? !activeCampusMapId : !activeFloorplanId}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                            </svg>
-                            AI 도면 분석 요청
-                        </Button>
+                        <>
+                            <Button variant="primary" onClick={handleAiRequest} disabled={isCampus ? !activeCampusMapId : !activeFloorplanId}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                                AI 도면 분석 요청
+                            </Button>
+                            {!isCampus && (
+                                <Button
+                                    variant="outlineGray"
+                                    onClick={onOpenMapEditor}
+                                    disabled={isPreparingMapEditor || !canOpenMapEditor || typeof onOpenMapEditor !== 'function'}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                                        <path d="M3 6h18"></path>
+                                        <path d="M7 12h10"></path>
+                                        <path d="M10 18h4"></path>
+                                    </svg>
+                                    {isPreparingMapEditor ? '맵 에디터 준비 중...' : '맵 에디터 열기'}
+                                </Button>
+                            )}
+                        </>
                     )}
                 </ActionRow>
             </Header>
