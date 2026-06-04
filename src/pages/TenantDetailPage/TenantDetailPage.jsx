@@ -123,19 +123,6 @@ const FlowInfoCard = styled.div`
     }
 `
 
-const FlowBadge = styled.span`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 88px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    background: ${({ $variant }) => ($variant === 'floorplan' ? 'rgba(59, 130, 246, 0.10)' : 'rgba(16, 185, 129, 0.10)')};
-    color: ${({ $variant }) => ($variant === 'floorplan' ? 'var(--blue-600)' : 'var(--green-700)')};
-`
-
 const StatusBadge = styled.span`
     display: inline-flex;
     align-items: center;
@@ -313,7 +300,6 @@ export default function TenantDetailPage() {
                                 <thead>
                                     <tr>
                                         <Th>건물명</Th>
-                                        <Th>운영 방식</Th>
                                         <Th>활성화 상태</Th>
                                         <Th>등록된 도면 수</Th>
                                         <Th>관리</Th>
@@ -322,13 +308,13 @@ export default function TenantDetailPage() {
                                 <tbody>
                                     {buildingsLoading ? (
                                         <Tr>
-                                            <Td colSpan="5" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
+                                            <Td colSpan="4" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
                                                 건물 목록 로딩 중...
                                             </Td>
                                         </Tr>
                                     ) : buildings.length === 0 ? (
                                         <Tr>
-                                            <Td colSpan="5" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
+                                            <Td colSpan="4" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
                                                 등록된 건물이 없습니다.
                                             </Td>
                                         </Tr>
@@ -346,11 +332,6 @@ export default function TenantDetailPage() {
                                                     >
                                                         {item.name}
                                                     </BuildingLink>
-                                                </Td>
-                                                <Td>
-                                                    <FlowBadge $variant={item.requiresFloorplan ? 'floorplan' : 'manual'}>
-                                                        {item.requiresFloorplan ? '도면 기반' : '도면 없음'}
-                                                    </FlowBadge>
                                                 </Td>
                                                 <Td>
                                                     <StatusBadge $status={item.activationStatus}>

@@ -14,7 +14,6 @@ import {
     StatLabel,
     StatNumber,
     StatsGrid,
-    StatusBadge,
     StatUnit,
     StatValueRow,
     Table,
@@ -50,15 +49,7 @@ export default function DashboardPage() {
         fetchTenants()
     }, [])
 
-    const getStatusLabel = (status) => {
-        if (status === 'approved') return '승인'
-        if (status === 'pending') return '대기중'
-        return status || '대기중'
-    }
-
-    // Dynamic Stats
     const totalTenants = tenants.length
-    const totalVisitors = tenants.reduce((acc, cur) => acc + (cur.visitors ?? 0), 0)
 
     return (
         <PageWrapper>
@@ -69,13 +60,6 @@ export default function DashboardPage() {
                         <StatValueRow>
                             <StatNumber>{totalTenants}</StatNumber>
                             <StatUnit>개</StatUnit>
-                        </StatValueRow>
-                    </StatCard>
-                    <StatCard>
-                        <StatLabel>일일 방문자수</StatLabel>
-                        <StatValueRow>
-                            <StatNumber>{totalVisitors}</StatNumber>
-                            <StatUnit>명</StatUnit>
                         </StatValueRow>
                     </StatCard>
                 </StatsGrid>
@@ -109,8 +93,6 @@ export default function DashboardPage() {
                                 <tr>
                                     <Th>단지명</Th>
                                     <Th>건물 수</Th>
-                                    <Th>방문자수</Th>
-                                    <Th>승인여부</Th>
                                     <Th>관리</Th>
                                 </tr>
                             </thead>
@@ -121,10 +103,6 @@ export default function DashboardPage() {
                                             {item.displayName}
                                         </Td>
                                         <Td>{item.buildingCount ?? 0}개</Td>
-                                        <Td>{item.visitors ?? 0}명</Td>
-                                        <Td>
-                                            <StatusBadge $status={getStatusLabel(item.status)}>{getStatusLabel(item.status)}</StatusBadge>
-                                        </Td>
                                         <Td>
                                             <ActionButtons onClick={(e) => e.stopPropagation()}>
                                                 <button aria-label="수정">
@@ -147,4 +125,3 @@ export default function DashboardPage() {
         </PageWrapper>
     )
 }
-
