@@ -98,6 +98,25 @@ export async function getBuildingByIdApi(tenantId, buildingId) {
     })
 }
 
+export async function getMapEditorFloorApi(tenantId, buildingId, floorId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/floors/${floorId}?tenantId=${tenantId}`, {
+        method: 'GET',
+    })
+}
+
+export async function initializeBuildingDraftApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/initialize-draft?tenantId=${tenantId}`, {
+        method: 'POST',
+    })
+}
+
+export async function saveMapEditorFloorDraftApi(tenantId, buildingId, floorId, draftData) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/floors/${floorId}/draft?tenantId=${tenantId}`, {
+        method: 'PUT',
+        body: draftData,
+    })
+}
+
 export async function createBuildingApi(tenantId, buildingData) {
     return requestApi(`/api/v1/buildings?tenantId=${tenantId}`, {
         method: 'POST',
@@ -132,5 +151,82 @@ export async function mapBuildingEntranceApi(tenantId, buildingId, mappingData) 
     return requestApi(`/api/v1/buildings/${buildingId}/entrance-mappings?tenantId=${tenantId}`, {
         method: 'POST',
         body: mappingData,
+    })
+}
+
+export async function addBuildingFloorApi(tenantId, buildingId, floorData) {
+    return requestApi(`/api/v1/buildings/${buildingId}/floors?tenantId=${tenantId}`, {
+        method: 'POST',
+        body: floorData,
+    })
+}
+
+export async function getVerticalConnectorsApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/vertical-connectors?tenantId=${tenantId}`, {
+        method: 'GET',
+    })
+}
+
+export async function createVerticalConnectorApi(tenantId, buildingId, data) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/vertical-connectors?tenantId=${tenantId}`, {
+        method: 'POST',
+        body: data,
+    })
+}
+
+export async function deleteVerticalConnectorApi(tenantId, buildingId, connectorId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/vertical-connectors/${connectorId}?tenantId=${tenantId}`, {
+        method: 'DELETE',
+    })
+}
+
+export async function mapVerticalConnectorNodeApi(tenantId, buildingId, connectorId, data) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/vertical-connectors/${connectorId}/nodes?tenantId=${tenantId}`, {
+        method: 'POST',
+        body: data,
+    })
+}
+
+export async function unmapVerticalConnectorNodeApi(tenantId, buildingId, connectorId, floorId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/vertical-connectors/${connectorId}/floors/${floorId}?tenantId=${tenantId}`, {
+        method: 'DELETE',
+    })
+}
+
+export async function getBuildingDraftPoisApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/draft-pois?tenantId=${tenantId}`, {
+        method: 'GET',
+    })
+}
+
+export async function saveBuildingPoiMappingsApi(tenantId, buildingId, data) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/poi-mappings?tenantId=${tenantId}`, {
+        method: 'PUT',
+        body: data,
+    })
+}
+
+export async function publishBuildingDraftApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/publish?tenantId=${tenantId}`, {
+        method: 'POST',
+    })
+}
+
+export async function searchPlacesApi(query, options = {}) {
+    const q = (query || '').trim()
+    if (!q) {
+        return []
+    }
+
+    const params = new URLSearchParams()
+    params.set('q', q)
+
+    if (options.lat != null) params.set('lat', String(options.lat))
+    if (options.lng != null) params.set('lng', String(options.lng))
+    if (options.radius != null) params.set('radius', String(options.radius))
+    if (options.size != null) params.set('size', String(options.size))
+
+    return requestApi(`/api/v1/places/search?${params.toString()}`, {
+        method: 'GET',
     })
 }

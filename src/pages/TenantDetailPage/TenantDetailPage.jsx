@@ -123,18 +123,10 @@ const FlowInfoCard = styled.div`
     }
 `
 
-const FlowBadge = styled.span`
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 88px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    background: ${({ $variant }) => ($variant === 'floorplan' ? 'rgba(59, 130, 246, 0.10)' : 'rgba(16, 185, 129, 0.10)')};
-    color: ${({ $variant }) => ($variant === 'floorplan' ? 'var(--blue-600)' : 'var(--green-700)')};
-`
+const ACTIVATION_STATUS = {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive'
+};
 
 const StatusBadge = styled.span`
     display: inline-flex;
@@ -145,8 +137,8 @@ const StatusBadge = styled.span`
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
-    background: ${({ $status }) => ($status === 'active' ? 'rgba(16, 185, 129, 0.10)' : 'rgba(245, 158, 11, 0.12)')};
-    color: ${({ $status }) => ($status === 'active' ? 'var(--green-700)' : 'var(--orange-700, #b45309)')};
+    background: ${({ $status }) => ($status === ACTIVATION_STATUS.ACTIVE ? 'rgba(16, 185, 129, 0.10)' : 'rgba(245, 158, 11, 0.12)')};
+    color: ${({ $status }) => ($status === ACTIVATION_STATUS.ACTIVE ? 'var(--green-700)' : 'var(--orange-700, #b45309)')};
 `
 
 import {
@@ -313,7 +305,6 @@ export default function TenantDetailPage() {
                                 <thead>
                                     <tr>
                                         <Th>건물명</Th>
-                                        <Th>운영 방식</Th>
                                         <Th>활성화 상태</Th>
                                         <Th>등록된 도면 수</Th>
                                         <Th>관리</Th>
@@ -322,13 +313,13 @@ export default function TenantDetailPage() {
                                 <tbody>
                                     {buildingsLoading ? (
                                         <Tr>
-                                            <Td colSpan="5" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
+                                            <Td colSpan="4" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
                                                 건물 목록 로딩 중...
                                             </Td>
                                         </Tr>
                                     ) : buildings.length === 0 ? (
                                         <Tr>
-                                            <Td colSpan="5" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
+                                            <Td colSpan="4" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
                                                 등록된 건물이 없습니다.
                                             </Td>
                                         </Tr>
@@ -348,13 +339,8 @@ export default function TenantDetailPage() {
                                                     </BuildingLink>
                                                 </Td>
                                                 <Td>
-                                                    <FlowBadge $variant={item.requiresFloorplan ? 'floorplan' : 'manual'}>
-                                                        {item.requiresFloorplan ? '도면 기반' : '도면 없음'}
-                                                    </FlowBadge>
-                                                </Td>
-                                                <Td>
-                                                    <StatusBadge $status={item.activationStatus}>
-                                                        {item.activationStatus === 'active' ? '활성' : '준비 중'}
+                                                    <StatusBadge $status={item.activationStatus || ACTIVATION_STATUS.INACTIVE}>
+                                                        {(item.activationStatus || ACTIVATION_STATUS.INACTIVE) === ACTIVATION_STATUS.ACTIVE ? '활성' : '준비 중'}
                                                     </StatusBadge>
                                                 </Td>
                                                 <Td>{item.floors?.length || 0}개</Td>
