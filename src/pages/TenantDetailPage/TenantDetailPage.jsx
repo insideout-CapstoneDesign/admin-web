@@ -123,6 +123,11 @@ const FlowInfoCard = styled.div`
     }
 `
 
+const ACTIVATION_STATUS = {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive'
+};
+
 const StatusBadge = styled.span`
     display: inline-flex;
     align-items: center;
@@ -132,8 +137,8 @@ const StatusBadge = styled.span`
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
-    background: ${({ $status }) => ($status === 'active' ? 'rgba(16, 185, 129, 0.10)' : 'rgba(245, 158, 11, 0.12)')};
-    color: ${({ $status }) => ($status === 'active' ? 'var(--green-700)' : 'var(--orange-700, #b45309)')};
+    background: ${({ $status }) => ($status === ACTIVATION_STATUS.ACTIVE ? 'rgba(16, 185, 129, 0.10)' : 'rgba(245, 158, 11, 0.12)')};
+    color: ${({ $status }) => ($status === ACTIVATION_STATUS.ACTIVE ? 'var(--green-700)' : 'var(--orange-700, #b45309)')};
 `
 
 import {
@@ -334,8 +339,8 @@ export default function TenantDetailPage() {
                                                     </BuildingLink>
                                                 </Td>
                                                 <Td>
-                                                    <StatusBadge $status={item.activationStatus}>
-                                                        {item.activationStatus === 'active' ? '활성' : '준비 중'}
+                                                    <StatusBadge $status={item.activationStatus || ACTIVATION_STATUS.INACTIVE}>
+                                                        {(item.activationStatus || ACTIVATION_STATUS.INACTIVE) === ACTIVATION_STATUS.ACTIVE ? '활성' : '준비 중'}
                                                     </StatusBadge>
                                                 </Td>
                                                 <Td>{item.floors?.length || 0}개</Td>

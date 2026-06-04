@@ -214,7 +214,10 @@ export default function PublishReviewModal({
                                         <PublishDetailValue>{activePublishPoi.mappedPlace.externalApiId || '-'}</PublishDetailValue>
                                         <PublishDetailLabel>위경도</PublishDetailLabel>
                                         <PublishDetailValue>
-                                            {activePublishPoi.mappedPlace.latitude != null && activePublishPoi.mappedPlace.longitude != null
+                                            {typeof activePublishPoi.mappedPlace.latitude === 'number' &&
+                                            Number.isFinite(activePublishPoi.mappedPlace.latitude) &&
+                                            typeof activePublishPoi.mappedPlace.longitude === 'number' &&
+                                            Number.isFinite(activePublishPoi.mappedPlace.longitude)
                                                 ? `${activePublishPoi.mappedPlace.latitude.toFixed(6)}, ${activePublishPoi.mappedPlace.longitude.toFixed(6)}`
                                                 : '-'}
                                         </PublishDetailValue>
@@ -234,7 +237,7 @@ export default function PublishReviewModal({
                                             <PublishHelpText>추천 후보를 찾는 중입니다.</PublishHelpText>
                                         ) : publishPoiRecommendations.length > 0 ? (
                                             publishPoiRecommendations.map((place, index) => (
-                                                <PublishSearchResultCard key={`recommend-${place.externalApiId || place.name}-${index}`}>
+                                                <PublishSearchResultCard key={place.externalApiId || `recommend-${place.name}-${index}`}>
                                                     <PublishSearchResultMeta>
                                                         <strong>{place.name}</strong>
                                                         <span>{place.roadAddress || place.address || '주소 정보 없음'}</span>
@@ -285,7 +288,7 @@ export default function PublishReviewModal({
 
                                     <PublishSearchResults>
                                         {publishPoiSearchResults.map((place, index) => (
-                                            <PublishSearchResultCard key={`${place.externalApiId || place.name}-${index}`}>
+                                            <PublishSearchResultCard key={place.externalApiId || `recommend-${place.name}-${index}`}>
                                                 <PublishSearchResultMeta>
                                                     <strong>{place.name}</strong>
                                                     <span>{place.roadAddress || place.address || '주소 정보 없음'}</span>

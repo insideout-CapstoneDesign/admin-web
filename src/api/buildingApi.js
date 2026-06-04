@@ -213,8 +213,13 @@ export async function publishBuildingDraftApi(tenantId, buildingId) {
 }
 
 export async function searchPlacesApi(query, options = {}) {
+    const q = (query || '').trim()
+    if (!q) {
+        return []
+    }
+
     const params = new URLSearchParams()
-    params.set('q', query)
+    params.set('q', q)
 
     if (options.lat != null) params.set('lat', String(options.lat))
     if (options.lng != null) params.set('lng', String(options.lng))

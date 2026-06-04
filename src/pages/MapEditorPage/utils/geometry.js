@@ -62,8 +62,19 @@ export function getLineMidpoint(geometry) {
         return null
     }
 
-    const midpoint = geometry.coordinates[Math.floor(geometry.coordinates.length / 2)]
-    return { x: midpoint[0], y: midpoint[1] }
+    const len = geometry.coordinates.length
+    if (len % 2 !== 0) {
+        const midpoint = geometry.coordinates[Math.floor(len / 2)]
+        return { x: midpoint[0], y: midpoint[1] }
+    }
+
+    const mid = len / 2
+    const p1 = geometry.coordinates[mid - 1]
+    const p2 = geometry.coordinates[mid]
+    return {
+        x: (p1[0] + p2[0]) / 2,
+        y: (p1[1] + p2[1]) / 2,
+    }
 }
 
 export function getPointPosition(geometry) {
@@ -215,6 +226,13 @@ export function translateGeometry(geometry, dx, dy) {
                 geometry.coordinates[0] + dx,
                 geometry.coordinates[1] + dy,
             ],
+        }
+    }
+
+    if (geometry.type === 'LineString' && Array.isArray(geometry.coordinates)) {
+        return {
+            ...geometry,
+            coordinates: geometry.coordinates.map(([x, y]) => [x + dx, y + dy]),
         }
     }
 

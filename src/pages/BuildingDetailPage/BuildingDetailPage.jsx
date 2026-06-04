@@ -253,12 +253,14 @@ export default function BuildingDetailPage() {
     const handleAddFloorSubmit = async (e) => {
         e.preventDefault()
 
-        if (!newFloorLevel || !newFloorName) {
+        const trimmedLevel = (newFloorLevel || '').toString().trim()
+        const trimmedFloorName = (newFloorName || '').trim()
+        if (!trimmedLevel || !trimmedFloorName) {
             window.alert('층 레벨과 이름을 입력해 주세요.')
             return
         }
 
-        const levelNum = parseInt(newFloorLevel, 10)
+        const levelNum = parseInt(trimmedLevel, 10)
         if (isNaN(levelNum)) {
             window.alert('층 레벨은 숫자여야 합니다.')
             return
@@ -267,7 +269,7 @@ export default function BuildingDetailPage() {
         try {
             const updatedBuilding = await addBuildingFloorApi(tenantId, submittedBuilding?.id || buildingId, {
                 level: levelNum,
-                name: newFloorName.trim(),
+                name: trimmedFloorName,
             })
 
             // 빌딩 정보 및 층 목록 갱신
@@ -295,7 +297,7 @@ export default function BuildingDetailPage() {
     const uploadedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl)).length
     const totalFloorCount = floors.length
     const analyzedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl) && floor.analysisCompleted).length
-    const canStartMapEditor = Boolean(activeFloor?.floorId && tenantId && analyzedFloorCount > 0)
+    const canStartMapEditor = Boolean(activeFloor?.floorId && tenantId && activeFloor?.analysisCompleted)
 
     useEffect(() => {
         if (!buildingId || !tenantId) {

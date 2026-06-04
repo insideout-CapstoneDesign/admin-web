@@ -197,7 +197,7 @@ export function isStrongPublishPoiCandidate(place) {
 
     if (distance != null && distance <= 250 && score >= 82) return true
     if (distance != null && distance <= 500 && score >= 96) return true
-    if (distance == null && score >= 108) return true
+    if (distance === null && score >= 108) return true
     return false
 }
 
