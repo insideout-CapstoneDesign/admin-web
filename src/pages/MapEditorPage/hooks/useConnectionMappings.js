@@ -7,6 +7,7 @@ import {
     mapBuildingEntranceApi,
     mapVerticalConnectorNodeApi,
     unmapVerticalConnectorNodeApi,
+    updateVerticalConnectorApi,
 } from '../../../api/buildingApi'
 import { getCampusByIdApi } from '../../../api/campusApi'
 
@@ -142,27 +143,18 @@ export default function useConnectionMappings({
         })
     }, [setActiveEditorTab, setToolMode])
 
-    const handleCreateVerticalConnector = useCallback(async () => {
-        if (!tenantId || !buildingId) return
-
-        const name = window.prompt('수직 이동수단 이름을 입력하세요 (예: 엘리베이터 1호기, 중앙 계단):')
-        if (!name) return
-
-        const type = window.prompt('수직 이동수단 종류를 입력하세요 (elevator, stair, escalator, ramp):', 'elevator')
-        if (!type) return
-
-        if (!['elevator', 'stair', 'escalator', 'ramp'].includes(type)) {
-            window.alert('올바른 종류를 입력하세요: elevator, stair, escalator, ramp 중 하나여야 합니다.')
-            return
-        }
+    const handleCreateVerticalConnector = useCallback(async (data) => {
+        if (!tenantId || !buildingId) return false
 
         try {
             setIsVerticalLoading(true)
-            await createVerticalConnectorApi(tenantId, buildingId, { name, kind: type })
+            await createVerticalConnectorApi(tenantId, buildingId, data)
             await refreshVerticalConnectors()
             window.alert('수직 이동수단이 추가되었습니다.')
+            return true
         } catch (err) {
             window.alert(err.message || '추가 중 오류가 발생했습니다.')
+            return false
         } finally {
             setIsVerticalLoading(false)
         }
@@ -183,6 +175,23 @@ export default function useConnectionMappings({
             setIsVerticalLoading(false)
         }
     }, [tenantId, buildingId, refreshVerticalConnectors])
+
+    const handleUpdateVerticalConnector = useCallback(async (connectorId, data) => {
+        if (!tenantId || !buildingId) return
+
+        try {
+            setIsVerticalLoading(true)
+            await updateVerticalConnectorApi(tenantId, buildingId, connectorId, data)
+            await refreshVerticalConnectors()
+            return true
+        } catch (err) {
+            window.alert(err.message || '수정 중 오류가 발생했습니다.')
+            return false
+        } finally {
+            setIsVerticalLoading(false)
+        }
+    }, [tenantId, buildingId, refreshVerticalConnectors])
+
 
     const startVerticalNodePick = useCallback((connectorId, connectorName, targetFloorId) => {
         setActiveEditorTab('connection')
@@ -319,6 +328,7 @@ export default function useConnectionMappings({
         startGatePick,
         handleCreateVerticalConnector,
         handleDeleteVerticalConnector,
+        handleUpdateVerticalConnector,
         startVerticalNodePick,
         handleMapVerticalNode,
         handleUnmapVerticalNode,

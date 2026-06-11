@@ -100,6 +100,10 @@ const ZoomButton = styled.button`
     cursor: pointer;
     font-size: 13px;
     font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 `
 
 const PanelToggleButton = styled.button`
@@ -204,6 +208,8 @@ export default function MapCanvasPanel({
     layerMeta,
     startNodeDrag,
 }) {
+    const isMappingMode = Boolean(pendingGatePick || activeConnectorForMapping)
+
     return (
         <CanvasStage>
             {activeConnectorForMapping && (
@@ -225,7 +231,10 @@ export default function MapCanvasPanel({
                     onClick={() => onChangeToolMode('select')}
                     title="선택 모드"
                 >
-                    ↖
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M7 7h10v10" />
+                        <path d="M7 17 17 7" />
+                    </svg>
                 </ZoomButton>
                 <ZoomButton
                     type="button"
@@ -233,15 +242,11 @@ export default function MapCanvasPanel({
                     onClick={() => onChangeToolMode('pan')}
                     title="이동 모드"
                 >
-                    ✋
-                </ZoomButton>
-                <ZoomButton
-                    type="button"
-                    $primary={isPreviewMode}
-                    onClick={onTogglePreviewMode}
-                    title="앱 미리보기 모드 토글"
-                >
-                    👁️ {isPreviewMode ? '편집 보기' : '앱 미리보기'}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M8 11V5a2 2 0 1 1 4 0v4" />
+                        <path d="M12 9V4a2 2 0 1 1 4 0v5" />
+                        <path d="M16 10V6a2 2 0 1 1 4 0v8c0 4.4-3.6 8-8 8h-1c-3.3 0-6.2-2-7.4-5L2 11.5A2 2 0 0 1 5.5 9l2.5 3" />
+                    </svg>
                 </ZoomButton>
                 <PanelToggleButton type="button" onClick={onToggleEditorCollapsed}>
                     {isEditorCollapsed ? '편집기 열기' : '편집기 접기'}
@@ -312,7 +317,7 @@ export default function MapCanvasPanel({
                                                 stroke={selectedEntity?.type === 'zone' && selectedEntity.id === shape.id ? '#dc2626' : zoneLayerMeta.color}
                                                 strokeWidth={selectedEntity?.type === 'zone' && selectedEntity.id === shape.id ? '3.5' : '2'}
                                                 strokeLinejoin="round"
-                                                style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? 'pointer' : 'default' }}
+                                                style={{ pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'pointer' : 'default' }}
                                                 onClick={() => handleEntitySelect('zone', shape.id)}
                                             />
                                         )
@@ -335,7 +340,7 @@ export default function MapCanvasPanel({
                                                         fill="#ffffff"
                                                         stroke="#f97316"
                                                         strokeWidth="2"
-                                                        style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? 'copy' : 'default' }}
+                                                        style={{ pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'copy' : 'default' }}
                                                         onClick={(event) => {
                                                             if (toolMode !== 'select') return
                                                             event.stopPropagation()
@@ -354,7 +359,7 @@ export default function MapCanvasPanel({
                                                             fill={isActiveVertex ? '#dc2626' : '#ffffff'}
                                                             stroke="#dc2626"
                                                             strokeWidth="2.5"
-                                                            style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? 'grab' : 'default' }}
+                                                            style={{ pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'grab' : 'default' }}
                                                             onClick={(event) => {
                                                                 if (toolMode !== 'select') return
                                                                 event.stopPropagation()
@@ -464,7 +469,7 @@ export default function MapCanvasPanel({
                                                         strokeWidth={selectedEntity?.type === 'edge' && selectedEntity.id === shape.id ? '6' : isLinkedToSelectedNode ? '5' : '4'}
                                                         strokeLinecap="round"
                                                         strokeLinejoin="round"
-                                                        style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? 'pointer' : 'default' }}
+                                                        style={{ pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'pointer' : 'default' }}
                                                         onClick={() => handleEntitySelect('edge', shape.id)}
                                                     />
                                                 )
@@ -480,7 +485,7 @@ export default function MapCanvasPanel({
                                                 fill={selectedEntity?.type === 'poi' && selectedEntity.id === poi.id ? 'rgba(124, 58, 237, 0.14)' : 'rgba(124, 58, 237, 0.06)'}
                                                 stroke={selectedEntity?.type === 'poi' && selectedEntity.id === poi.id ? '#5b21b6' : layerMeta.pois.color}
                                                 strokeWidth={selectedEntity?.type === 'poi' && selectedEntity.id === poi.id ? '4' : '2'}
-                                                style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? 'pointer' : 'default' }}
+                                                style={{ pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'pointer' : 'default' }}
                                                 onClick={() => handleEntitySelect('poi', poi.id)}
                                             />
                                         ) : null
@@ -506,7 +511,7 @@ export default function MapCanvasPanel({
                                                     fill="rgba(124, 58, 237, 0.14)"
                                                     stroke={selectedEntity?.type === 'poi' && selectedEntity.id === poi.id ? '#5b21b6' : layerMeta.pois.color}
                                                     strokeWidth="2.5"
-                                                    style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? 'grab' : 'default' }}
+                                                    style={{ pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'grab' : 'default' }}
                                                     onClick={() => handleEntitySelect('poi', poi.id)}
                                                     onPointerDown={(event) => startPoiDrag(event, poi)}
                                                 />
@@ -536,7 +541,7 @@ export default function MapCanvasPanel({
                                                     fill={isPendingGateNode ? 'rgba(37, 99, 235, 0.16)' : isHighlighted ? 'rgba(91, 33, 182, 0.14)' : layerMeta.nodes.bg}
                                                     stroke={strokeColor}
                                                     strokeWidth="3"
-                                                    style={{ pointerEvents: 'auto', cursor: toolMode === 'select' ? (pendingGatePick ? 'crosshair' : 'grab') : 'default' }}
+                                                    style={{ pointerEvents: 'auto', cursor: isMappingMode ? 'pointer' : (toolMode === 'select' ? 'grab' : 'default') }}
                                                     onClick={() => handleEntitySelect('node', node.id)}
                                                     onPointerDown={(event) => startNodeDrag(event, node)}
                                                 />
@@ -568,7 +573,7 @@ export default function MapCanvasPanel({
                                                     stroke="rgba(255,255,255,0.96)"
                                                     strokeWidth="3.2"
                                                     paintOrder="stroke"
-                                                    style={{ fontSize: `${fontSize}px`, fontWeight: 700, letterSpacing: '-0.02em', pointerEvents: 'auto', cursor: toolMode === 'select' ? 'grab' : 'default' }}
+                                                    style={{ fontSize: `${fontSize}px`, fontWeight: 700, letterSpacing: '-0.02em', pointerEvents: isMappingMode ? 'none' : 'auto', cursor: toolMode === 'select' ? 'grab' : 'default' }}
                                                     onClick={() => handleEntitySelect('poi', poi.id)}
                                                     onPointerDown={(event) => startPoiDrag(event, poi)}
                                                 >

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     getBuildingDraftPoisApi,
     publishBuildingDraftApi,
@@ -28,7 +29,9 @@ export default function usePublishReview({
     mappedGateCount,
     campusGateCount,
     onMoveToConnectionTab,
+    onSaveDraft,
 }) {
+    const navigate = useNavigate()
     const [isPublishing, setIsPublishing] = useState(false)
     const [isPublishReviewOpen, setIsPublishReviewOpen] = useState(false)
     const [draftPoisForPublish, setDraftPoisForPublish] = useState([])
@@ -339,8 +342,16 @@ export default function usePublishReview({
 
     async function openPublishReview() {
         if (hasPendingEdits) {
-            window.alert('최종 배포 전에는 현재 층 편집 내용을 먼저 임시저장해 주세요.')
-            return
+            if (onSaveDraft) {
+                const saved = await onSaveDraft({ silent: true })
+                if (!saved) {
+                    window.alert('현재 층 편집 내용을 임시저장하지 못해 배포를 진행할 수 없습니다.')
+                    return
+                }
+            } else {
+                window.alert('최종 배포 전에는 현재 층 편집 내용을 먼저 임시저장해 주세요.')
+                return
+            }
         }
 
         setIsPublishReviewOpen(true)
@@ -389,7 +400,7 @@ export default function usePublishReview({
             await publishBuildingDraftApi(tenantId, buildingId)
             window.alert('성공적으로 정식 버전이 배포되었습니다!')
             closePublishReview()
-            window.location.reload()
+            navigate(`/tenant/${tenantId}`)
         } catch (err) {
             window.alert(err.message || '배포 중 오류가 발생했습니다.')
         } finally {

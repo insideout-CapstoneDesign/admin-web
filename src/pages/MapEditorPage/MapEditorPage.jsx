@@ -187,6 +187,7 @@ export default function MapEditorPage() {
         startGatePick,
         handleCreateVerticalConnector,
         handleDeleteVerticalConnector,
+        handleUpdateVerticalConnector,
         startVerticalNodePick,
         handleMapVerticalNode,
         handleUnmapVerticalNode,
@@ -453,6 +454,7 @@ export default function MapEditorPage() {
         mappedGateCount,
         campusGateCount: campusGates.length,
         onMoveToConnectionTab: () => setActiveEditorTab('connection'),
+        onSaveDraft: saveCurrentFloorDraft,
     })
 
     const toggleLayer = (key) => {
@@ -477,6 +479,22 @@ export default function MapEditorPage() {
                 },
             },
         }))
+    }
+
+    const updateMultipleEntitiesPatch = (patches) => {
+        setLocalEdits((current) => {
+            const next = { ...current }
+            patches.forEach(({ type, id, patch }) => {
+                next[type] = {
+                    ...(next[type] || {}),
+                    [id]: {
+                        ...(next[type]?.[id] || {}),
+                        ...patch,
+                    },
+                }
+            })
+            return next
+        })
     }
 
     const updateSelectedEntityField = (field, value) => {
@@ -513,12 +531,18 @@ export default function MapEditorPage() {
     }
 
     const updateNodePosition = (nodeId, point, connectedEdges = null, nodeOriginalPosition = null) => {
-        updateSelectedEntityPatch('node', nodeId, {
-            geomPx: {
-                type: 'Point',
-                coordinates: [point.x, point.y],
+        const patches = [
+            {
+                type: 'node',
+                id: nodeId,
+                patch: {
+                    geomPx: {
+                        type: 'Point',
+                        coordinates: [point.x, point.y],
+                    },
+                },
             },
-        })
+        ]
 
         const edgesToUpdate = connectedEdges
             || editedData.edges.flatMap((edge) => ([
@@ -527,11 +551,50 @@ export default function MapEditorPage() {
             ].filter(Boolean)))
 
         edgesToUpdate.forEach(({ edge, role, originalGeomPx }) => {
-            const baseGeometry = originalGeomPx || edge.geomPx
-            updateSelectedEntityPatch('edge', edge.id, {
-                geomPx: updateLineEndpointGeometry(baseGeometry, role, point, nodeOriginalPosition),
-            })
+            let fromCoords = null
+            if (edge.fromNodeId === nodeId) {
+                fromCoords = [point.x, point.y]
+            } else {
+                const fromNode = editedData.nodes.find((n) => n.id === edge.fromNodeId)
+                if (fromNode && fromNode.geomPx?.coordinates) {
+                    fromCoords = fromNode.geomPx.coordinates
+                }
+            }
+
+            let toCoords = null
+            if (edge.toNodeId === nodeId) {
+                toCoords = [point.x, point.y]
+            } else {
+                const toNode = editedData.nodes.find((n) => n.id === edge.toNodeId)
+                if (toNode && toNode.geomPx?.coordinates) {
+                    toCoords = toNode.geomPx.coordinates
+                }
+            }
+
+            if (fromCoords && toCoords) {
+                patches.push({
+                    type: 'edge',
+                    id: edge.id,
+                    patch: {
+                        geomPx: {
+                            type: 'LineString',
+                            coordinates: [fromCoords, toCoords],
+                        },
+                    },
+                })
+            } else {
+                const baseGeometry = originalGeomPx || edge.geomPx
+                patches.push({
+                    type: 'edge',
+                    id: edge.id,
+                    patch: {
+                        geomPx: updateLineEndpointGeometry(baseGeometry, role, point, nodeOriginalPosition),
+                    },
+                })
+            }
         })
+
+        updateMultipleEntitiesPatch(patches)
     }
 
     const updateZoneVertices = (zoneId, updater) => {
@@ -745,7 +808,7 @@ export default function MapEditorPage() {
         }
     }
 
-    async function handleSaveDraft() {
+    async function saveCurrentFloorDraft({ silent = false } = {}) {
         if (!tenantId || !buildingId || !floorId || isSavingDraft) return
 
         try {
@@ -788,21 +851,33 @@ export default function MapEditorPage() {
                 // 저장 후 캐시 삭제 실패는 무시합니다.
             }
             await refreshEntranceMappings({ silent: true })
-            window.alert('임시저장이 완료되었습니다.')
+            if (!silent) {
+                window.alert('임시저장이 완료되었습니다.')
+            }
+            return true
         } catch (err) {
-            window.alert(err.message || '임시저장 중 오류가 발생했습니다.')
+            if (!silent) {
+                window.alert(err.message || '임시저장 중 오류가 발생했습니다.')
+            }
+            return false
         } finally {
             setIsSavingDraft(false)
         }
     }
 
-    function handleFloorChange(targetFloor) {
+    async function handleSaveDraft() {
+        await saveCurrentFloorDraft()
+    }
+
+    async function handleFloorChange(targetFloor) {
         if (!targetFloor?.id) return
         if (targetFloor.id === floorId) return
+        if (isSavingDraft) return
 
         if (hasPendingEdits) {
-            const shouldMove = window.confirm('저장되지 않은 수정사항이 있습니다. 이 상태로 층을 이동할까요? 현재 브라우저에서는 임시로 유지되지만 서버에는 저장되지 않습니다.')
-            if (!shouldMove) {
+            const saved = await saveCurrentFloorDraft({ silent: true })
+            if (!saved) {
+                window.alert('층 이동 전에 현재 층 임시저장에 실패했습니다. 다시 시도해 주세요.')
                 return
             }
         }
@@ -823,7 +898,7 @@ export default function MapEditorPage() {
         <PageWrapper>
             <Container>
                 <HeaderCard>
-                    <BackButton onClick={() => navigate(-1)}>
+                    <BackButton onClick={() => navigate(`/building/${buildingId}?tenantId=${tenantId}`, { state: { building: location.state?.building || null } })}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="19" y1="12" x2="5" y2="12"></line>
                             <polyline points="12 19 5 12 12 5"></polyline>
@@ -833,7 +908,6 @@ export default function MapEditorPage() {
                     <TitleRow>
                         <TitleGroup>
                             <h1>{pageTitle} 맵 에디터</h1>
-                            <p>{floorTitle} 기준 draft 맵 데이터를 불러왔습니다. 기본적으로는 저장된 정식 레이어만 표시하며, 필요할 때만 도면 배경을 켜서 비교할 수 있습니다.</p>
                             <HeaderUtilityRow>
                                 {floorOptions.length > 1 && (
                                     <FloorSwitcher>
@@ -958,8 +1032,8 @@ export default function MapEditorPage() {
                         {!isEditorCollapsed && (
                             <EditorCard>
                                 <EditorHeader>
-                                    <EditorTopBar>
-                                        <h2>편집 패널</h2>
+                                <EditorTopBar>
+                                    <h2>편집 패널</h2>
                                         <DetailActions>
                                             {hasPendingEdits && <UnsavedBadge>로컬 편집 중</UnsavedBadge>}
                                             <Button
@@ -979,7 +1053,6 @@ export default function MapEditorPage() {
                                             </Button>
                                         </DetailActions>
                                     </EditorTopBar>
-                                    <p>지도를 왼쪽에서 확인하고, 오른쪽 패널에서 `node`, `edge`, `poi`, `zone` 목록과 기본 속성을 다듬습니다. 임시저장을 누르면 현재 층 draft가 서버에 반영됩니다.</p>
                                 </EditorHeader>
 
                                 <EditorTabs>
@@ -1017,6 +1090,7 @@ export default function MapEditorPage() {
                                             onOpenNodeTab={() => setActiveEditorTab('node')}
                                             verticalConnectors={verticalConnectors}
                                             onCreateVerticalConnector={handleCreateVerticalConnector}
+                                            onUpdateVerticalConnector={handleUpdateVerticalConnector}
                                             isVerticalLoading={isVerticalLoading}
                                             activeConnectorForMapping={activeConnectorForMapping}
                                             floorOptions={floorOptions}

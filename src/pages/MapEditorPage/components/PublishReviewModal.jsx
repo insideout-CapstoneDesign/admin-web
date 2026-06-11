@@ -229,9 +229,6 @@ export default function PublishReviewModal({
                                         <h3>자동 추천 후보</h3>
                                         <span>이름 + 건물 별칭 기반</span>
                                     </PublishSectionTitle>
-                                    <PublishHelpText>
-                                        전체 건물명을 그대로 붙이면 검색이 오히려 좁아질 수 있어서, POI 이름 중심 쿼리와 건물명 변형 쿼리를 함께 돌려 후보를 먼저 모았습니다.
-                                    </PublishHelpText>
                                     <PublishSearchResults>
                                         {isPublishPoiRecommendLoading ? (
                                             <PublishHelpText>추천 후보를 찾는 중입니다.</PublishHelpText>
