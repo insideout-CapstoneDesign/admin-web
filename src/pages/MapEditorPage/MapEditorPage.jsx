@@ -130,8 +130,8 @@ export default function MapEditorPage() {
     const [isAddingEdge, setIsAddingEdge] = useState(false)
     const [edgeStartNodeId, setEdgeStartNodeId] = useState(null)
     const [isSavingDraft, setIsSavingDraft] = useState(false)
-    const [isPreviewMode, setIsPreviewMode] = useState(false)
-    const selectedEntity = isPreviewMode ? null : originalSelectedEntity;
+    const [isPreviewMode] = useState(false)
+    const selectedEntity = isPreviewMode ? null : originalSelectedEntity
     const [deletedEntityIds, setDeletedEntityIds] = useState({
         node: [],
         edge: [],
@@ -633,6 +633,7 @@ export default function MapEditorPage() {
         zoom,
         setZoom,
         toolMode,
+        activeEditorTab,
         pendingGatePick,
         activeConnectorForMapping,
         handleMapCampusGate,
@@ -985,7 +986,6 @@ export default function MapEditorPage() {
                                 toolMode={toolMode}
                                 onChangeToolMode={setToolMode}
                                 isPreviewMode={isPreviewMode}
-                                onTogglePreviewMode={() => setIsPreviewMode((prev) => !prev)}
                                 isEditorCollapsed={isEditorCollapsed}
                                 onToggleEditorCollapsed={() => setIsEditorCollapsed((current) => !current)}
                                 zoom={zoom}

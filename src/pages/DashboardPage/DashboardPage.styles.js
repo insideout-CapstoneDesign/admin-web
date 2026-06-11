@@ -185,6 +185,11 @@ export const ActionButtons = styled.div`
         justify-content: center;
         transition: color 0.2s;
 
+        &:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
         &:hover {
             color: var(--blue-500);
         }

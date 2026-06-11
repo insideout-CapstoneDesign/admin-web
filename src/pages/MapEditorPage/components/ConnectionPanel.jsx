@@ -591,7 +591,6 @@ export default function ConnectionPanel({
             return
         }
 
-        let success = false
         const payload = {
             name: formData.name,
             kind: formData.kind,
@@ -599,11 +598,9 @@ export default function ConnectionPanel({
             direction: formData.direction,
         }
 
-        if (modalMode === 'create') {
-            success = await onCreateVerticalConnector(payload)
-        } else {
-            success = await onUpdateVerticalConnector(editingConnectorId, payload)
-        }
+        const success = modalMode === 'create'
+            ? await onCreateVerticalConnector(payload)
+            : await onUpdateVerticalConnector(editingConnectorId, payload)
 
         if (success) {
             setIsModalOpen(false)
@@ -953,4 +950,3 @@ export default function ConnectionPanel({
         </>
     )
 }
-

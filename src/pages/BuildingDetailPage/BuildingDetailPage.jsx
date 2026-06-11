@@ -420,11 +420,19 @@ export default function BuildingDetailPage() {
         }
     }
 
+    const handleBackToTenant = () => {
+        if (tenantId) {
+            navigate(`/tenant/${tenantId}`)
+            return
+        }
+        navigate(-1)
+    }
+
     return (
         <PageWrapper>
             <Container>
                 <HeaderArea>
-                    <BackButton onClick={() => navigate(`/tenant/${tenantId}`)}>
+                    <BackButton onClick={handleBackToTenant}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="19" y1="12" x2="5" y2="12"></line>
                             <polyline points="12 19 5 12 12 5"></polyline>
@@ -505,7 +513,11 @@ export default function BuildingDetailPage() {
                                         </AddFloorBtn>
                                     )}
                                 </PanelHeader>
-                                {isBuildingActive}
+                                {isBuildingActive && (
+                                    <PanelHint>
+                                        활성 건물은 빈 층이 사용자에게 먼저 보일 수 있어 여기서 층 추가를 숨겨두었습니다.
+                                    </PanelHint>
+                                )}
                                 <FloorList>
                                     {floors.map((floor) => (
                                         <FloorItem

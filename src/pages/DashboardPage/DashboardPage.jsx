@@ -31,6 +31,7 @@ export default function DashboardPage() {
     const [tenants, setTenants] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [pendingSubscriptionByTenant, setPendingSubscriptionByTenant] = useState({})
 
     const fetchTenants = async () => {
         try {
@@ -54,13 +55,22 @@ export default function DashboardPage() {
 
     const handleSubscriptionToggle = async (e, tenant) => {
         e.stopPropagation()
+        if (!tenant?.tenantId || pendingSubscriptionByTenant[tenant.tenantId]) {
+            return
+        }
+
+        setPendingSubscriptionByTenant((current) => ({
+            ...current,
+            [tenant.tenantId]: true,
+        }))
+
         const isApproved = tenant.status === 'approved'
 
-        if (isApproved) {
-            try {
+        try {
+            if (isApproved) {
                 const buildings = await getBuildingsApi(tenant.tenantId)
                 const activeBuildings = buildings.filter(b => b.activationStatus === 'active')
-                
+
                 if (activeBuildings.length > 0) {
                     const activeNames = activeBuildings.map(b => b.name).join(', ')
                     alert(`단지 내에 활성화된 건물(${activeNames})이 존재합니다.\n건물들을 먼저 비활성화한 뒤 구독을 취소해 주세요.`)
@@ -72,23 +82,22 @@ export default function DashboardPage() {
 
                 await deactivateTenantApi(tenant.tenantId)
                 alert('구독이 취소되었습니다.')
-                fetchTenants()
-            } catch (err) {
-                console.error('구독 취소 실패:', err)
-                alert(err.message || '구독 취소 처리 중 오류가 발생했습니다.')
-            }
-        } else {
-            const confirmActivate = window.confirm(`"${tenant.displayName}" 단지의 구독을 활성화하시겠습니까?`)
-            if (!confirmActivate) return
+            } else {
+                const confirmActivate = window.confirm(`"${tenant.displayName}" 단지의 구독을 활성화하시겠습니까?`)
+                if (!confirmActivate) return
 
-            try {
                 await activateTenantApi(tenant.tenantId)
                 alert('구독이 활성화되었습니다.')
-                fetchTenants()
-            } catch (err) {
-                console.error('구독 활성화 실패:', err)
-                alert(err.message || '구독 활성화 처리 중 오류가 발생했습니다.')
             }
+            await fetchTenants()
+        } catch (err) {
+            console.error(isApproved ? '구독 취소 실패:' : '구독 활성화 실패:', err)
+            alert(err.message || (isApproved ? '구독 취소 처리 중 오류가 발생했습니다.' : '구독 활성화 처리 중 오류가 발생했습니다.'))
+        } finally {
+            setPendingSubscriptionByTenant((current) => ({
+                ...current,
+                [tenant.tenantId]: false,
+            }))
         }
     }
 
@@ -138,24 +147,32 @@ export default function DashboardPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {tenants.map((item) => (
-                                    <Tr key={item.tenantId} onClick={() => navigate(`/tenant/${item.tenantId}`, { state: { tenantName: item.displayName } })}>
-                                        <Td style={{ fontWeight: 'var(--fw-bold)', color: 'var(--black-900)' }}>
-                                            {item.displayName}
-                                        </Td>
-                                        <Td>{item.buildingCount ?? 0}개</Td>
-                                        <Td>
-                                            <ActionButtons onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    className={item.status === 'approved' ? "cancel-sub disabled" : "cancel-sub activate-btn"}
-                                                    onClick={(e) => handleSubscriptionToggle(e, item)}
-                                                >
-                                                    {item.status === 'approved' ? "구독 취소" : "구독 활성화"}
-                                                </button>
-                                            </ActionButtons>
-                                        </Td>
-                                    </Tr>
-                                ))}
+                                {tenants.map((item) => {
+                                    const isPending = Boolean(pendingSubscriptionByTenant[item.tenantId])
+                                    const isApproved = item.status === 'approved'
+
+                                    return (
+                                        <Tr key={item.tenantId} onClick={() => navigate(`/tenant/${item.tenantId}`, { state: { tenantName: item.displayName } })}>
+                                            <Td style={{ fontWeight: 'var(--fw-bold)', color: 'var(--black-900)' }}>
+                                                {item.displayName}
+                                            </Td>
+                                            <Td>{item.buildingCount ?? 0}개</Td>
+                                            <Td>
+                                                <ActionButtons onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        className={isApproved ? 'cancel-sub disabled' : 'cancel-sub activate-btn'}
+                                                        onClick={(e) => handleSubscriptionToggle(e, item)}
+                                                        disabled={isPending}
+                                                    >
+                                                        {isPending
+                                                            ? (isApproved ? '처리 중...' : '활성화 중...')
+                                                            : (isApproved ? '구독 취소' : '구독 활성화')}
+                                                    </button>
+                                                </ActionButtons>
+                                            </Td>
+                                        </Tr>
+                                    )
+                                })}
                             </tbody>
                         </Table>
                     </TableContainer>

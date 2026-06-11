@@ -166,7 +166,6 @@ export default function MapCanvasPanel({
     toolMode,
     onChangeToolMode,
     isPreviewMode,
-    onTogglePreviewMode,
     isEditorCollapsed,
     onToggleEditorCollapsed,
     zoom,

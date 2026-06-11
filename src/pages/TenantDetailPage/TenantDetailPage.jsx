@@ -6,7 +6,7 @@ import FloorplanUploadView from '../../components/Upload/FloorplanUploadView'
 import Button from '../../components/Button/Button'
 import { getCampusesApi, createCampusApi } from '../../api/campusApi'
 import { getMyTenantsApi } from '../../api/tenantApi'
-import { getBuildingsApi, deactivateBuildingApi, activateBuildingApi } from '../../api/buildingApi'
+import { getBuildingsApi, deactivateBuildingApi } from '../../api/buildingApi'
 import styled from 'styled-components'
 
 const NoCampusContainer = styled.div`
@@ -227,28 +227,17 @@ export default function TenantDetailPage() {
 
     const handleStatusToggle = async (e, building) => {
         e.stopPropagation()
-        const isActive = building.activationStatus === 'active'
+        // 활성 상태인 경우만 비활성화 가능 (활성화는 최종 배포를 통해서만 가능)
+        if (building.activationStatus !== 'active') return
 
-        if (isActive) {
-            const ok = window.confirm(`"${building.name}" 건물을 비활성화하시겠습니까?\n비활성화 시 실시간 서비스 이용이 일시 중단됩니다.`)
-            if (!ok) return
-            try {
-                await deactivateBuildingApi(tenantId, building.id)
-                fetchTenantAndBuildings()
-            } catch (err) {
-                console.error('건물 비활성화 오류:', err)
-                alert('비활성화 처리 중 오류가 발생했습니다: ' + err.message)
-            }
-        } else {
-            const ok = window.confirm(`"${building.name}" 건물을 활성화하시겠습니까?`)
-            if (!ok) return
-            try {
-                await activateBuildingApi(tenantId, building.id)
-                fetchTenantAndBuildings()
-            } catch (err) {
-                console.error('건물 활성화 오류:', err)
-                alert('활성화 처리 중 오류가 발생했습니다: ' + err.message)
-            }
+        const ok = window.confirm(`"${building.name}" 건물을 비활성화하시겠습니까?\n비활성화 시 실시간 서비스 이용이 일시 중단됩니다.`)
+        if (!ok) return
+        try {
+            await deactivateBuildingApi(tenantId, building.id)
+            fetchTenantAndBuildings()
+        } catch (err) {
+            console.error('건물 비활성화 오류:', err)
+            alert('비활성화 처리 중 오류가 발생했습니다: ' + err.message)
         }
     }
 
@@ -373,12 +362,19 @@ export default function TenantDetailPage() {
                                                 <Td>{item.floors?.length || 0}개</Td>
                                                 <Td>
                                                     <ActionButtons onClick={(e) => e.stopPropagation()}>
-                                                        <button
-                                                            className={item.activationStatus === 'active' ? 'status-btn deactivate' : 'status-btn activate'}
-                                                            onClick={(e) => handleStatusToggle(e, item)}
-                                                        >
-                                                            {item.activationStatus === 'active' ? '비활성화' : '활성화'}
-                                                        </button>
+                                                        {item.activationStatus === 'active' && (
+                                                            <button
+                                                                className="status-btn deactivate"
+                                                                onClick={(e) => handleStatusToggle(e, item)}
+                                                            >
+                                                                비활성화
+                                                            </button>
+                                                        )}
+                                                        {item.activationStatus === 'inactive' && (
+                                                            <span className="status-hint">
+                                                                다시 배포 시 활성화
+                                                            </span>
+                                                        )}
                                                     </ActionButtons>
                                                 </Td>
                                             </Tr>

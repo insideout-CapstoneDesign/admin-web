@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 export default function useCanvasInteractions({
     mapViewportRef,
@@ -7,6 +7,7 @@ export default function useCanvasInteractions({
     zoom,
     setZoom,
     toolMode,
+    activeEditorTab,
     pendingGatePick,
     activeConnectorForMapping,
     handleMapCampusGate,
@@ -49,6 +50,7 @@ export default function useCanvasInteractions({
 }) {
     const dragStateRef = useRef(null)
     const entityDragRef = useRef(null)
+    const [isPanning, setIsPanning] = useState(false)
 
     const updateZoom = (nextZoom, clientX = null, clientY = null) => {
         const viewport = mapViewportRef.current
@@ -89,6 +91,7 @@ export default function useCanvasInteractions({
             scrollLeft: mapViewportRef.current.scrollLeft,
             scrollTop: mapViewportRef.current.scrollTop,
         }
+        setIsPanning(true)
         mapViewportRef.current.setPointerCapture?.(event.pointerId)
     }
 
@@ -159,6 +162,7 @@ export default function useCanvasInteractions({
 
     const handleViewportPointerUp = (event) => {
         entityDragRef.current = null
+        setIsPanning(false)
         if (toolMode !== 'pan' || !mapViewportRef.current) return
         dragStateRef.current = null
         mapViewportRef.current.releasePointerCapture?.(event.pointerId)
@@ -252,7 +256,7 @@ export default function useCanvasInteractions({
     }
 
     const viewportCursor = toolMode === 'pan'
-        ? (dragStateRef.current ? 'grabbing' : 'grab')
+        ? (isPanning ? 'grabbing' : 'grab')
         : ((pendingGatePick || isAddingPoi || isAddingZone || isAddingNode || isAddingEdge || activeConnectorForMapping) ? 'crosshair' : 'default')
 
     function createNodeAtPoint(point) {

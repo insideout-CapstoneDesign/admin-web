@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     createVerticalConnectorApi,
     deleteVerticalConnectorApi,
@@ -30,6 +30,10 @@ export default function useConnectionMappings({
     const [isVerticalLoading, setIsVerticalLoading] = useState(false)
     const [activeConnectorForMapping, setActiveConnectorForMapping] = useState(null)
     const [pendingGatePick, setPendingGatePick] = useState(null)
+    const effectivePendingGatePick = useMemo(
+        () => (activeEditorTab === 'connection' ? pendingGatePick : null),
+        [activeEditorTab, pendingGatePick]
+    )
 
     const refreshEntranceMappings = useCallback(async (options = {}) => {
         const { silent = false } = options
@@ -39,6 +43,7 @@ export default function useConnectionMappings({
         }
 
         try {
+            setIsMappingLoading(true)
             const mappings = await getBuildingEntrancesApi(tenantId, buildingId)
             setEntranceMappings(mappings || [])
             return mappings || []
@@ -48,6 +53,8 @@ export default function useConnectionMappings({
             }
             console.error('출입구 매핑 정보를 불러오지 못했습니다:', err)
             return []
+        } finally {
+            setIsMappingLoading(false)
         }
     }, [tenantId, buildingId])
 
@@ -59,6 +66,7 @@ export default function useConnectionMappings({
         }
 
         try {
+            setIsVerticalLoading(true)
             const connectors = await getVerticalConnectorsApi(tenantId, buildingId)
             setVerticalConnectors(connectors || [])
             return connectors || []
@@ -68,6 +76,8 @@ export default function useConnectionMappings({
             }
             console.error('수직 이동수단 목록을 불러오지 못했습니다:', err)
             return []
+        } finally {
+            setIsVerticalLoading(false)
         }
     }, [tenantId, buildingId])
 
@@ -293,12 +303,6 @@ export default function useConnectionMappings({
     }, [floorId, floorOptions, handleFloorChange, setSelectedEntity])
 
     useEffect(() => {
-        if (activeEditorTab !== 'connection') {
-            setPendingGatePick(null)
-        }
-    }, [activeEditorTab])
-
-    useEffect(() => {
         try {
             const raw = window.sessionStorage.getItem('pending_connector_mapping')
             if (raw) {
@@ -320,7 +324,7 @@ export default function useConnectionMappings({
         verticalConnectors,
         isVerticalLoading,
         activeConnectorForMapping,
-        pendingGatePick,
+        pendingGatePick: effectivePendingGatePick,
         initializeConnectionData,
         refreshEntranceMappings,
         setActiveConnectorForMapping,
