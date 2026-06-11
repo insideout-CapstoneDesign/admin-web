@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TenantModal from '../../components/Modal/TenantModal'
-import { getMyTenantsApi } from '../../api/tenantApi'
+import { getMyTenantsApi, activateTenantApi, deactivateTenantApi } from '../../api/tenantApi'
+import { getBuildingsApi } from '../../api/buildingApi'
 import {
     ActionButtons,
     AddButton,
@@ -30,6 +31,7 @@ export default function DashboardPage() {
     const [tenants, setTenants] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [pendingSubscriptionByTenant, setPendingSubscriptionByTenant] = useState({})
 
     const fetchTenants = async () => {
         try {
@@ -50,6 +52,54 @@ export default function DashboardPage() {
     }, [])
 
     const totalTenants = tenants.length
+
+    const handleSubscriptionToggle = async (e, tenant) => {
+        e.stopPropagation()
+        if (!tenant?.tenantId || pendingSubscriptionByTenant[tenant.tenantId]) {
+            return
+        }
+
+        setPendingSubscriptionByTenant((current) => ({
+            ...current,
+            [tenant.tenantId]: true,
+        }))
+
+        const isApproved = tenant.status === 'approved'
+
+        try {
+            if (isApproved) {
+                const buildings = await getBuildingsApi(tenant.tenantId)
+                const activeBuildings = buildings.filter(b => b.activationStatus === 'active')
+
+                if (activeBuildings.length > 0) {
+                    const activeNames = activeBuildings.map(b => b.name).join(', ')
+                    alert(`단지 내에 활성화된 건물(${activeNames})이 존재합니다.\n건물들을 먼저 비활성화한 뒤 구독을 취소해 주세요.`)
+                    return
+                }
+
+                const confirmCancel = window.confirm(`"${tenant.displayName}" 단지의 구독을 취소하시겠습니까?\n구독 취소 시 실시간 내비게이션 기능 이용이 제한될 수 있습니다.`)
+                if (!confirmCancel) return
+
+                await deactivateTenantApi(tenant.tenantId)
+                alert('구독이 취소되었습니다.')
+            } else {
+                const confirmActivate = window.confirm(`"${tenant.displayName}" 단지의 구독을 활성화하시겠습니까?`)
+                if (!confirmActivate) return
+
+                await activateTenantApi(tenant.tenantId)
+                alert('구독이 활성화되었습니다.')
+            }
+            await fetchTenants()
+        } catch (err) {
+            console.error(isApproved ? '구독 취소 실패:' : '구독 활성화 실패:', err)
+            alert(err.message || (isApproved ? '구독 취소 처리 중 오류가 발생했습니다.' : '구독 활성화 처리 중 오류가 발생했습니다.'))
+        } finally {
+            setPendingSubscriptionByTenant((current) => ({
+                ...current,
+                [tenant.tenantId]: false,
+            }))
+        }
+    }
 
     return (
         <PageWrapper>
@@ -97,24 +147,32 @@ export default function DashboardPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {tenants.map((item) => (
-                                    <Tr key={item.tenantId} onClick={() => navigate(`/tenant/${item.tenantId}`, { state: { tenantName: item.displayName } })}>
-                                        <Td style={{ fontWeight: 'var(--fw-bold)', color: 'var(--black-900)' }}>
-                                            {item.displayName}
-                                        </Td>
-                                        <Td>{item.buildingCount ?? 0}개</Td>
-                                        <Td>
-                                            <ActionButtons onClick={(e) => e.stopPropagation()}>
-                                                <button aria-label="수정">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                                </button>
-                                                <button className="delete" aria-label="삭제">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                </button>
-                                            </ActionButtons>
-                                        </Td>
-                                    </Tr>
-                                ))}
+                                {tenants.map((item) => {
+                                    const isPending = Boolean(pendingSubscriptionByTenant[item.tenantId])
+                                    const isApproved = item.status === 'approved'
+
+                                    return (
+                                        <Tr key={item.tenantId} onClick={() => navigate(`/tenant/${item.tenantId}`, { state: { tenantName: item.displayName } })}>
+                                            <Td style={{ fontWeight: 'var(--fw-bold)', color: 'var(--black-900)' }}>
+                                                {item.displayName}
+                                            </Td>
+                                            <Td>{item.buildingCount ?? 0}개</Td>
+                                            <Td>
+                                                <ActionButtons onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        className={isApproved ? 'cancel-sub disabled' : 'cancel-sub activate-btn'}
+                                                        onClick={(e) => handleSubscriptionToggle(e, item)}
+                                                        disabled={isPending}
+                                                    >
+                                                        {isPending
+                                                            ? (isApproved ? '처리 중...' : '활성화 중...')
+                                                            : (isApproved ? '구독 취소' : '구독 활성화')}
+                                                    </button>
+                                                </ActionButtons>
+                                            </Td>
+                                        </Tr>
+                                    )
+                                })}
                             </tbody>
                         </Table>
                     </TableContainer>

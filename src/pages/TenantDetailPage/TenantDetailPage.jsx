@@ -6,7 +6,7 @@ import FloorplanUploadView from '../../components/Upload/FloorplanUploadView'
 import Button from '../../components/Button/Button'
 import { getCampusesApi, createCampusApi } from '../../api/campusApi'
 import { getMyTenantsApi } from '../../api/tenantApi'
-import { getBuildingsApi } from '../../api/buildingApi'
+import { getBuildingsApi, deactivateBuildingApi } from '../../api/buildingApi'
 import styled from 'styled-components'
 
 const NoCampusContainer = styled.div`
@@ -225,6 +225,22 @@ export default function TenantDetailPage() {
         fetchTenantAndBuildings()
     }, [tenantId])
 
+    const handleStatusToggle = async (e, building) => {
+        e.stopPropagation()
+        // 활성 상태인 경우만 비활성화 가능 (활성화는 최종 배포를 통해서만 가능)
+        if (building.activationStatus !== 'active') return
+
+        const ok = window.confirm(`"${building.name}" 건물을 비활성화하시겠습니까?\n비활성화 시 실시간 서비스 이용이 일시 중단됩니다.`)
+        if (!ok) return
+        try {
+            await deactivateBuildingApi(tenantId, building.id)
+            fetchTenantAndBuildings()
+        } catch (err) {
+            console.error('건물 비활성화 오류:', err)
+            alert('비활성화 처리 중 오류가 발생했습니다: ' + err.message)
+        }
+    }
+
     const isCampusFlowReady = activeTab !== null
 
     return (
@@ -253,7 +269,7 @@ export default function TenantDetailPage() {
                             $active={activeTab === 'map'}
                             onClick={() => setActiveTab('map')}
                         >
-                            단지 전도(캠퍼스 맵) 관리
+                            단지 관리
                         </TabButton>
                     </TabBar>
                 ) : (
@@ -346,12 +362,19 @@ export default function TenantDetailPage() {
                                                 <Td>{item.floors?.length || 0}개</Td>
                                                 <Td>
                                                     <ActionButtons onClick={(e) => e.stopPropagation()}>
-                                                        <button aria-label="수정">
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                                        </button>
-                                                        <button className="delete" aria-label="삭제">
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                        </button>
+                                                        {item.activationStatus === 'active' && (
+                                                            <button
+                                                                className="status-btn deactivate"
+                                                                onClick={(e) => handleStatusToggle(e, item)}
+                                                            >
+                                                                비활성화
+                                                            </button>
+                                                        )}
+                                                        {item.activationStatus === 'inactive' && (
+                                                            <span className="status-hint">
+                                                                다시 배포 시 활성화
+                                                            </span>
+                                                        )}
                                                     </ActionButtons>
                                                 </Td>
                                             </Tr>
@@ -430,15 +453,13 @@ export default function TenantDetailPage() {
                                     />
                                 ) : (
                                     <FlowInfoCard>
-                                        <h4>이 단지는 도면 업로드 없이 운영되는 흐름입니다.</h4>
+                                        <h4>Gate 기반으로 운영되는 단지입니다.</h4>
                                         <p>
-                                            현재 등록된 Campus Gate를 기준으로 이후 <strong>건물 등록</strong>과
-                                            <strong> 건물 출입구 매핑</strong>을 진행하면 됩니다.
-                                            캠퍼스 맵 AI 분석은 이 단지에서 필수 단계가 아닙니다.
+                                            캠퍼스 Gate를 등록한 뒤 <strong>건물 등록</strong>과
+                                            <strong> 건물 출입구 매핑</strong>만 진행하면 됩니다.
                                         </p>
                                         <p>
-                                            다음 구현 단계에서는 각 건물 1층 출입구를 만들고,
-                                            여기서 등록한 Gate와 1:1로 연결한 뒤 길찾기를 활성화하게 됩니다.
+                                            캠퍼스 맵 업로드나 AI 분석은 필요하지 않습니다.
                                         </p>
                                         <div>
                                             <Button variant="primary" onClick={() => setActiveTab('buildings')}>

@@ -193,6 +193,13 @@ export async function unmapVerticalConnectorNodeApi(tenantId, buildingId, connec
     })
 }
 
+export async function updateVerticalConnectorApi(tenantId, buildingId, connectorId, data) {
+    return requestApi(`/api/v1/map-editor/buildings/${buildingId}/vertical-connectors/${connectorId}?tenantId=${tenantId}`, {
+        method: 'PATCH',
+        body: data,
+    })
+}
+
 export async function getBuildingDraftPoisApi(tenantId, buildingId) {
     return requestApi(`/api/v1/map-editor/buildings/${buildingId}/draft-pois?tenantId=${tenantId}`, {
         method: 'GET',
@@ -208,6 +215,18 @@ export async function saveBuildingPoiMappingsApi(tenantId, buildingId, data) {
 
 export async function publishBuildingDraftApi(tenantId, buildingId) {
     return requestApi(`/api/v1/map-editor/buildings/${buildingId}/publish?tenantId=${tenantId}`, {
+        method: 'POST',
+    })
+}
+
+export async function deactivateBuildingApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/buildings/${buildingId}/deactivate?tenantId=${tenantId}`, {
+        method: 'POST',
+    })
+}
+
+export async function activateBuildingApi(tenantId, buildingId) {
+    return requestApi(`/api/v1/buildings/${buildingId}/activate?tenantId=${tenantId}`, {
         method: 'POST',
     })
 }

@@ -7,7 +7,6 @@ import DashboardPage from './pages/DashboardPage/DashboardPage'
 import TenantDetailPage from './pages/TenantDetailPage/TenantDetailPage'
 import BuildingDetailPage from './pages/BuildingDetailPage/BuildingDetailPage'
 import MapEditorPage from './pages/MapEditorPage/MapEditorPage'
-import ComponentTestPage from './pages/ComponentTestPage/ComponentTestPage'
 
 function App() {
     return (
@@ -21,7 +20,6 @@ function App() {
                 <Route path="/building/:buildingId/floors/:floorId/editor" element={<MapEditorPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
-                <Route path="/component-test" element={<ComponentTestPage />} />
             </Routes>
         </BrowserRouter>
     )

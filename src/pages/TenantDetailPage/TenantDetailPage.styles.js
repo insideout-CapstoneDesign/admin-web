@@ -232,5 +232,64 @@ export const ActionButtons = styled.div`
         &.delete:hover {
             color: var(--red-500, #ef4444);
         }
+
+        &.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+
+            &:hover {
+                color: inherit;
+            }
+
+            &.delete:hover {
+                color: inherit;
+            }
+        }
+
+        &.status-btn {
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            font-weight: var(--fw-semibold);
+            padding: 5px 12px;
+            border-radius: var(--radius-6, 6px);
+            border: 1px solid transparent;
+            transition: all 0.18s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            color: inherit;
+
+            &.activate {
+                background-color: var(--blue-500);
+                color: white;
+                border-color: var(--blue-500);
+                box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+
+                &:hover {
+                    background-color: var(--blue-600, #2563eb);
+                    border-color: var(--blue-600, #2563eb);
+                    color: white;
+                }
+            }
+
+            &.deactivate {
+                background-color: transparent;
+                color: var(--gray-500);
+                border-color: var(--gray-300);
+
+                &:hover {
+                    background-color: rgba(239, 68, 68, 0.06);
+                    border-color: var(--red-400, #f87171);
+                    color: var(--red-500, #ef4444);
+                }
+            }
+        }
+
+        .status-hint {
+            font-size: 12px;
+            color: var(--gray-400);
+            font-style: italic;
+            white-space: nowrap;
+        }
     }
 `

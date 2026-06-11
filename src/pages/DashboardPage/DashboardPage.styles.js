@@ -185,12 +185,56 @@ export const ActionButtons = styled.div`
         justify-content: center;
         transition: color 0.2s;
 
+        &:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
         &:hover {
             color: var(--blue-500);
         }
 
         &.delete:hover {
             color: var(--red-500, #ef4444);
+        }
+
+        &.cancel-sub {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: var(--fw-semibold);
+            padding: 6px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-6, 6px);
+            background-color: var(--gray-50);
+            color: var(--gray-500);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            
+            &.disabled {
+                opacity: 0.6;
+                background-color: var(--gray-100);
+                color: var(--gray-400);
+                border-color: var(--gray-200);
+                cursor: pointer;
+                
+                &:hover {
+                    background-color: var(--gray-200);
+                    color: var(--gray-600);
+                }
+            }
+
+            &.activate-btn {
+                background-color: var(--blue-500);
+                color: var(--white);
+                border-color: var(--blue-500);
+                box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+
+                &:hover {
+                    background-color: var(--blue-600);
+                    border-color: var(--blue-600);
+                    color: var(--white);
+                }
+            }
         }
     }
 `
