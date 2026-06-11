@@ -61,3 +61,15 @@ export async function createTenantApi(tenantData) {
         body: tenantData,
     })
 }
+
+export async function activateTenantApi(tenantId) {
+    return requestApi(`/api/v1/tenants/${tenantId}/activate`, {
+        method: 'PATCH',
+    })
+}
+
+export async function deactivateTenantApi(tenantId) {
+    return requestApi(`/api/v1/tenants/${tenantId}/deactivate`, {
+        method: 'PATCH',
+    })
+}
