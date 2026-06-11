@@ -690,9 +690,6 @@ export default function FloorplanUploadView({
     campus = null,
     onFloorplanUploaded = null,
     onAnalysisCompleted = null,
-    canOpenMapEditor = false,
-    isPreparingMapEditor = false,
-    onOpenMapEditor = null,
 }) {
     const [isDragging, setIsDragging] = useState(false)
     const [previewUrl, setPreviewUrl] = useState(campus?.currentMapImageUrl || imageUrl || null)
@@ -1175,13 +1172,6 @@ export default function FloorplanUploadView({
                             </ToggleChip>
                         </>
                     )}
-                    {analysisResult && (
-                        <StatusBadge $tone={activeSourceTone}>
-                            {activeSourceTone === 'api' && 'API 응답'}
-                            {activeSourceTone === 'mock' && 'Mock 응답'}
-                            {activeSourceTone === 'mock-fallback' && 'Mock Fallback'}
-                        </StatusBadge>
-                    )}
                     {status === 'preview' && (
                         <>
                             <Button variant="primary" onClick={handleAiRequest} disabled={isCampus ? !activeCampusMapId : !activeFloorplanId}>
@@ -1192,20 +1182,6 @@ export default function FloorplanUploadView({
                                 </svg>
                                 AI 도면 분석 요청
                             </Button>
-                            {!isCampus && (
-                                <Button
-                                    variant="outlineGray"
-                                    onClick={onOpenMapEditor}
-                                    disabled={isPreparingMapEditor || !canOpenMapEditor || typeof onOpenMapEditor !== 'function'}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                                        <path d="M3 6h18"></path>
-                                        <path d="M7 12h10"></path>
-                                        <path d="M10 18h4"></path>
-                                    </svg>
-                                    {isPreparingMapEditor ? '맵 에디터 준비 중...' : '맵 에디터 열기'}
-                                </Button>
-                            )}
                         </>
                     )}
                 </ActionRow>

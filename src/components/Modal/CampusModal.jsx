@@ -453,6 +453,9 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, init
 
     const mapModeRef = useRef(mapMode)
     const gateCountRef = useRef(0)
+    const gateCoordsRef = useRef([])
+    const boundaryCoordsRef = useRef([])
+    const centroidRef = useRef({ longitude: '', latitude: '' })
     useEffect(() => {
         mapModeRef.current = mapMode
     }, [mapMode])
@@ -496,6 +499,21 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, init
     const gateCoords = watch('gates')
     const requiresFloorplan = watch('requiresFloorplan')
 
+    useEffect(() => {
+        gateCoordsRef.current = gateCoords || []
+    }, [gateCoords])
+
+    useEffect(() => {
+        boundaryCoordsRef.current = boundaryCoords || []
+    }, [boundaryCoords])
+
+    useEffect(() => {
+        centroidRef.current = {
+            longitude: centroidLng,
+            latitude: centroidLat,
+        }
+    }, [centroidLat, centroidLng])
+
     // 1. 모달이 열리면 기본 초기화
     useEffect(() => {
         if (isOpen) {
@@ -523,8 +541,9 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, init
     }, [boundaryCoords])
 
     const updateCentroidMarker = () => {
-        if (!mapInstance.current || !centroidLng || !centroidLat) return
-        const center = new window.kakao.maps.LatLng(Number(centroidLat), Number(centroidLng))
+        const { longitude, latitude } = centroidRef.current
+        if (!mapInstance.current || !longitude || !latitude) return
+        const center = new window.kakao.maps.LatLng(Number(latitude), Number(longitude))
         mapInstance.current.setCenter(center)
         mapInstance.current.setLevel(3)
 
@@ -552,9 +571,10 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, init
         gateLabelsRef.current.forEach((overlay) => overlay.setMap(null))
         gateLabelsRef.current = []
 
-        if (!gateCoords || gateCoords.length === 0) return
+        const currentGateCoords = gateCoordsRef.current
+        if (!currentGateCoords || currentGateCoords.length === 0) return
 
-        gateCoords.forEach((gate, index) => {
+        currentGateCoords.forEach((gate, index) => {
             if (!gate?.longitude || !gate?.latitude) {
                 return
             }
@@ -725,9 +745,10 @@ export default function CampusModal({ isOpen, onClose, tenantId, onSuccess, init
         boundaryMarkersRef.current.forEach(m => m.setMap(null))
         boundaryMarkersRef.current = []
 
-        if (!boundaryCoords || boundaryCoords.length === 0) return
+        const currentBoundaryCoords = boundaryCoordsRef.current
+        if (!currentBoundaryCoords || currentBoundaryCoords.length === 0) return
 
-        const path = boundaryCoords.map(coord => {
+        const path = currentBoundaryCoords.map(coord => {
             const pos = new window.kakao.maps.LatLng(Number(coord.latitude), Number(coord.longitude))
 
             const markerContent = document.createElement('div')

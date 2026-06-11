@@ -12,6 +12,7 @@ import {
     FloorList,
     HeaderArea,
     MainViewer,
+    PanelHint,
     PageWrapper,
     PanelHeader,
     SidePanel,
@@ -253,6 +254,11 @@ export default function BuildingDetailPage() {
     const handleAddFloorSubmit = async (e) => {
         e.preventDefault()
 
+        if (isBuildingActive) {
+            window.alert('활성 건물은 층 추가를 바로 반영하지 않도록 현재 막아두었습니다.')
+            return
+        }
+
         const trimmedLevel = (newFloorLevel || '').toString().trim()
         const trimmedFloorName = (newFloorName || '').trim()
         if (!trimmedLevel || !trimmedFloorName) {
@@ -293,11 +299,22 @@ export default function BuildingDetailPage() {
 
     const tenantId = submittedBuilding?.tenantId || searchParams.get('tenantId')
     const buildingName = submittedBuilding?.name || '건물'
+    const isBuildingActive = (submittedBuilding?.activationStatus || '').toLowerCase() === 'active'
     const activeFloor = floors.find((floor) => floor.level === activeFloorLevel) || floors[0] || null
     const uploadedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl)).length
     const totalFloorCount = floors.length
     const analyzedFloorCount = floors.filter((floor) => Boolean(floor.floorplanImageUrl) && floor.analysisCompleted).length
-    const canStartMapEditor = Boolean(activeFloor?.floorId && tenantId && activeFloor?.analysisCompleted)
+    const isAllFloorsReady = totalFloorCount > 0 &&
+        uploadedFloorCount === totalFloorCount &&
+        analyzedFloorCount === totalFloorCount
+
+    const canStartMapEditor = Boolean(
+        activeFloor?.floorId &&
+        tenantId &&
+        isAllFloorsReady
+    )
+    const isCurrentFloorUploaded = Boolean(activeFloor?.floorplanImageUrl)
+    const isCurrentFloorAnalyzed = Boolean(activeFloor?.analysisCompleted)
 
     useEffect(() => {
         if (!buildingId || !tenantId) {
@@ -348,16 +365,13 @@ export default function BuildingDetailPage() {
     }, [buildingId, submittedBuilding, tenantId])
 
     const progressSteps = useMemo(() => {
-        const isUploadComplete = totalFloorCount > 0 && uploadedFloorCount === totalFloorCount
-        const isAnalysisComplete = isUploadComplete && analyzedFloorCount === uploadedFloorCount
-
         return [
-            { done: totalFloorCount > 0, label: '층 준비' },
-            { done: isUploadComplete, label: '도면 업로드' },
-            { done: isAnalysisComplete, label: 'AI 분석' },
-            { done: isAnalysisComplete, label: '맵 에디터' },
+            { done: Boolean(activeFloor), label: '층 준비' },
+            { done: isCurrentFloorUploaded, label: '도면 업로드' },
+            { done: isCurrentFloorAnalyzed, label: 'AI 분석' },
+            { done: canStartMapEditor, label: '맵 에디터' },
         ]
-    }, [analyzedFloorCount, totalFloorCount, uploadedFloorCount])
+    }, [activeFloor, canStartMapEditor, isCurrentFloorAnalyzed, isCurrentFloorUploaded])
 
     const handleFloorplanUploaded = (uploadedFloorplan) => {
         if (!activeFloor?.floorId) return
@@ -410,12 +424,12 @@ export default function BuildingDetailPage() {
         <PageWrapper>
             <Container>
                 <HeaderArea>
-                    <BackButton onClick={() => navigate(-1)}>
+                    <BackButton onClick={() => navigate(`/tenant/${tenantId}`)}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="19" y1="12" x2="5" y2="12"></line>
                             <polyline points="12 19 5 12 12 5"></polyline>
                         </svg>
-                        이전으로 돌아가기
+                        건물 목록으로 돌아가기
                     </BackButton>
                     <TitleRow>
                         <Title>{buildingName} 도면 관리</Title>
@@ -434,19 +448,25 @@ export default function BuildingDetailPage() {
                     </SummaryCard>
                 ) : (
                     <>
-                        <SummaryCard style={{ marginBottom: '24px' }}>
+                        <SummaryCard style={{ marginBottom: '22px' }}>
                             <SummaryHeader>
                                 <SummaryHeaderCopy>
                                     <h3>도면 준비</h3>
-                                    <p>층별 도면을 올리고 AI 분석까지 마치면 다음 단계에서 맵 에디터로 이어집니다.</p>
                                 </SummaryHeaderCopy>
-                                <Button
-                                    variant="primary"
-                                    onClick={handleOpenMapEditor}
-                                    disabled={!canStartMapEditor || initializingMapEditor}
-                                >
-                                    {initializingMapEditor ? '맵 에디터 준비 중...' : '맵 에디터 시작'}
-                                </Button>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    {!canStartMapEditor && totalFloorCount > 0 && (
+                                        <span style={{ fontSize: '12.5px', color: 'var(--red-500)', fontWeight: '600', textAlign: 'right' }}>
+                                            모든 층의 도면 업로드 및 AI 분석 완료가 필요합니다.
+                                        </span>
+                                    )}
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleOpenMapEditor}
+                                        disabled={!canStartMapEditor || initializingMapEditor}
+                                    >
+                                        {initializingMapEditor ? '맵 에디터 준비 중...' : '맵 에디터 시작'}
+                                    </Button>
+                                </div>
                             </SummaryHeader>
                             <MetaGrid>
                                 <MetaCard>
@@ -476,8 +496,16 @@ export default function BuildingDetailPage() {
                             <SidePanel>
                                 <PanelHeader>
                                     <h3>층 목록</h3>
-                                    <AddFloorBtn aria-label="층 추가" onClick={() => setIsAddFloorOpen(true)}>+</AddFloorBtn>
+                                    {!isBuildingActive && (
+                                        <AddFloorBtn
+                                            aria-label="층 추가"
+                                            onClick={() => setIsAddFloorOpen(true)}
+                                        >
+                                            +
+                                        </AddFloorBtn>
+                                    )}
                                 </PanelHeader>
+                                {isBuildingActive}
                                 <FloorList>
                                     {floors.map((floor) => (
                                         <FloorItem
@@ -504,9 +532,6 @@ export default function BuildingDetailPage() {
                                         tenantId={tenantId}
                                         onFloorplanUploaded={handleFloorplanUploaded}
                                         onAnalysisCompleted={handleFloorAnalysisCompleted}
-                                        canOpenMapEditor={Boolean(activeFloor.analysisCompleted && activeFloor.floorId && tenantId)}
-                                        isPreparingMapEditor={initializingMapEditor}
-                                        onOpenMapEditor={handleOpenMapEditor}
                                     />
                                 ) : (
                                     <SummaryCard>

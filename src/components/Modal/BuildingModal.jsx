@@ -121,6 +121,13 @@ const Description = styled.p`
     line-height: 1.5;
 `
 
+const Subtitle = styled.p`
+    margin: -12px 0 0;
+    color: var(--gray-500);
+    font-size: 13px;
+    line-height: 1.5;
+`
+
 const InputWrapper = styled.div`
     display: flex;
     gap: 8px;
@@ -248,6 +255,31 @@ const FlowBadge = styled.span`
     color: ${({ $variant }) => ($variant === 'floorplan' ? 'var(--blue-600)' : 'var(--green-700)')};
 `
 
+const SummaryRow = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+`
+
+const SummaryCard = styled.div`
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-12, 12px);
+    background: var(--white);
+    padding: 14px 16px;
+`
+
+const SummaryLabel = styled.div`
+    color: var(--gray-500);
+    font-size: 12px;
+    margin-bottom: 6px;
+`
+
+const SummaryValue = styled.div`
+    color: var(--black-900);
+    font-size: 15px;
+    font-weight: 700;
+`
+
 function createFloorName(level) {
     return level < 0 ? `B${Math.abs(level)}` : `${level}F`
 }
@@ -291,18 +323,18 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenant
     const flowDescription = useMemo(() => {
         if (!campusRequiresFloorplan) {
             return {
-                badge: '기본 등록',
+                badge: 'Gate 기반',
                 variant: 'manual',
-                title: '건물 기본 정보와 층 구조를 먼저 등록합니다.',
-                description: '이 화면에서는 건물 기본 정보와 층 구조만 저장합니다. 저장 후에는 건물 상세에서 필요한 정보를 확인하고, 이후 단계에서 출입구 매핑과 활성화를 진행합니다.',
+                title: '도면 없이 등록',
+                description: '건물 정보와 층만 등록한 뒤 출입구를 연결합니다.',
             }
         }
 
         return {
             badge: '도면 기반',
             variant: 'floorplan',
-            title: '건물 등록 후 층별 도면 업로드와 AI 분석을 진행합니다.',
-            description: '이 화면에서는 건물 기본 정보와 층 구조만 먼저 저장합니다. 저장 후 각 층 도면을 업로드하고, 층별 AI 분석을 완료한 뒤 맵 에디터에서 출입구 매핑과 활성화를 진행합니다.',
+            title: '도면 업로드 진행',
+            description: '건물 정보와 층을 등록한 뒤 층별 도면 작업으로 이어집니다.',
         }
     }, [campusRequiresFloorplan])
 
@@ -397,11 +429,12 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenant
                             </svg>
                         </CloseButton>
                     </Header>
+                    <Subtitle>건물 기본 정보와 층 구성을 먼저 등록합니다.</Subtitle>
 
                     <Form onSubmit={handleSubmit(onSubmit, onError)}>
                         <FieldGroup>
-                            <Label>등록 플로우</Label>
-                            <Description>건물의 진행 방식은 캠퍼스 단계에서 이미 결정된 값을 그대로 따릅니다.</Description>
+                            <Label>등록 방식</Label>
+                            <Description>캠퍼스 설정에 따라 이후 작업 흐름이 정해집니다.</Description>
                             <InfoCard>
                                 <FlowBadge $variant={flowDescription.variant}>{flowDescription.badge}</FlowBadge>
                                 <div style={{ marginTop: '10px' }}>
@@ -414,10 +447,16 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenant
                         </FieldGroup>
 
                         {campus && (
-                            <InfoCard>
-                                <strong>{campus.name}</strong>에 등록된 Gate는 현재 {campus.gates?.length || 0}개예요.
-                                건물 등록 후에는 층별 도면 업로드와 AI 분석을 마친 다음, 맵 에디터에서 이 Gate들과 건물 출입구를 연결하게 됩니다.
-                            </InfoCard>
+                            <SummaryRow>
+                                <SummaryCard>
+                                    <SummaryLabel>연결 예정 Gate</SummaryLabel>
+                                    <SummaryValue>{campus.gates?.length || 0}개</SummaryValue>
+                                </SummaryCard>
+                                <SummaryCard>
+                                    <SummaryLabel>대상 단지</SummaryLabel>
+                                    <SummaryValue>{campus.name}</SummaryValue>
+                                </SummaryCard>
+                            </SummaryRow>
                         )}
 
                         <FieldGroup>
@@ -455,7 +494,7 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenant
 
                         <FieldGroup>
                             <Label>층 구조 설정</Label>
-                            <Description>층 정보는 건물 기본 구조라서 항상 먼저 저장됩니다. 지하 시작 층수와 지상 끝 층수를 입력한 뒤 자동 생성하고, 실제 없는 층은 태그에서 제거하세요.</Description>
+                            <Description>범위를 입력한 뒤 층 목록을 만들고, 필요 없는 층은 태그에서 제거하세요.</Description>
                             <RangeRow>
                                 <FieldGroup>
                                     <Label htmlFor="basementFloorCount">지하 층수</Label>
@@ -509,13 +548,6 @@ export default function BuildingModal({ isOpen, onClose, onSubmitSuccess, tenant
 
                             {errors.floors && <ErrorMessage>{errors.floors.message}</ErrorMessage>}
                         </FieldGroup>
-
-                        {!campusRequiresFloorplan && (
-                            <InfoCard>
-                                <strong>도면 없는 건물 흐름</strong><br />
-                                층 정보는 먼저 저장되지만, 바로 도면 업로드로 가지 않고 1층 출입구를 수동으로 만들고 Campus Gate와 연결하는 단계로 이동하게 됩니다.
-                            </InfoCard>
-                        )}
 
                         <Footer>
                             <Button type="button" variant="secondary" onClick={handleClose}>

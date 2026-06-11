@@ -95,15 +95,23 @@ export const PanelHeader = styled.div`
 export const AddFloorBtn = styled.button`
     background: none;
     border: none;
-    color: var(--blue-500);
+    color: ${({ disabled }) => (disabled ? 'var(--gray-300)' : 'var(--blue-500)')};
     font-size: 18px;
     font-weight: bold;
-    cursor: pointer;
+    cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
     padding: 0 4px;
 
     &:hover {
-        color: var(--blue-700);
+        color: ${({ disabled }) => (disabled ? 'var(--gray-300)' : 'var(--blue-700)')};
     }
+`
+
+export const PanelHint = styled.p`
+    margin: 0;
+    padding: 12px 16px 0;
+    color: var(--gray-500);
+    font-size: 12px;
+    line-height: 1.55;
 `
 
 export const FloorList = styled.div`
