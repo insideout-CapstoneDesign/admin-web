@@ -36,6 +36,7 @@ export default function usePublishReview({
     const [isPublishReviewOpen, setIsPublishReviewOpen] = useState(false)
     const [draftPoisForPublish, setDraftPoisForPublish] = useState([])
     const [publishPoiEdits, setPublishPoiEdits] = useState({})
+    const [publishPoiFilterKeyword, setPublishPoiFilterKeyword] = useState('')
     const [activePublishPoiId, setActivePublishPoiId] = useState(null)
     const [publishPoiSearchKeyword, setPublishPoiSearchKeyword] = useState('')
     const [publishPoiSearchResults, setPublishPoiSearchResults] = useState([])
@@ -191,6 +192,25 @@ export default function usePublishReview({
         [publishPoiRows]
     )
 
+    const filteredPublishPoiRows = useMemo(() => {
+        const keyword = publishPoiFilterKeyword.trim().toLowerCase()
+        if (!keyword) {
+            return publishPoiRows
+        }
+
+        return publishPoiRows.filter((poi) => {
+            const fields = [
+                poi.name,
+                poi.floorName,
+                poi.code,
+                poi.mappedPlace?.name,
+                poi.mappedPlace?.address,
+            ]
+
+            return fields.some((value) => String(value || '').toLowerCase().includes(keyword))
+        })
+    }, [publishPoiFilterKeyword, publishPoiRows])
+
     const activePublishPoi = useMemo(
         () => publishPoiRows.find((poi) => poi.id === activePublishPoiId) || publishPoiRows[0] || null,
         [activePublishPoiId, publishPoiRows]
@@ -265,6 +285,7 @@ export default function usePublishReview({
 
     function closePublishReview() {
         setIsPublishReviewOpen(false)
+        setPublishPoiFilterKeyword('')
         setPublishPoiSearchResults([])
         setPublishPoiRecommendations([])
         setPublishPoiRecommendationMap({})
@@ -420,6 +441,9 @@ export default function usePublishReview({
             onClose: closePublishReview,
             reviewedPublishPoiCount,
             publishPoiRows,
+            filteredPublishPoiRows,
+            publishPoiFilterKeyword,
+            onChangePublishPoiFilterKeyword: setPublishPoiFilterKeyword,
             mappedGateCount,
             campusGateCount,
             publishEntranceReady,

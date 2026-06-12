@@ -47,6 +47,9 @@ export default function PublishReviewModal({
     onClose,
     reviewedPublishPoiCount,
     publishPoiRows,
+    filteredPublishPoiRows,
+    publishPoiFilterKeyword,
+    onChangePublishPoiFilterKeyword,
     mappedGateCount,
     campusGateCount,
     publishEntranceReady,
@@ -123,37 +126,47 @@ export default function PublishReviewModal({
                                 : `아직 검토가 필요한 draft POI가 ${pendingPublishPoiCount}개 남아 있습니다.`}
                         </PublishRequirementNotice>
 
+                        <PublishSearchInput
+                            value={publishPoiFilterKeyword}
+                            onChange={(event) => onChangePublishPoiFilterKeyword(event.target.value)}
+                            placeholder="POI 검색"
+                        />
+
                         <PublishPoiList>
-                            {publishPoiRows.map((poi) => (
-                                <PublishPoiItem
-                                    key={poi.id}
-                                    type="button"
-                                    $active={activePublishPoi?.id === poi.id}
-                                    onClick={() => onSelectPoi(poi.id)}
-                                >
-                                    <PublishPoiItemTop>
-                                        <strong>{poi.name || '이름 없는 POI'}</strong>
-                                        <PublishStatusBadge $status={poi.reviewStatus}>
-                                            {getPublishPoiStatusLabel(poi.reviewStatus)}
-                                        </PublishStatusBadge>
-                                    </PublishPoiItemTop>
-                                    <PublishPoiMeta>
-                                        <span>{poi.floorName || '-'} · {poi.code || '코드 없음'}</span>
-                                        <br />
-                                        {poi.reviewStatus === 'confirmed' ? (
-                                            <>
-                                                <span>{poi.mappedPlace.name || '매핑 장소명 없음'}</span>
-                                                <br />
-                                                <span>{poi.mappedPlace.address || `외부 ID: ${poi.mappedPlace.externalApiId || '-'}`}</span>
-                                            </>
-                                        ) : poi.reviewStatus === 'excluded' ? (
-                                            <span>외부 매핑 제외 처리됨</span>
-                                        ) : (
-                                            <span>추천 후보를 확인해 주세요</span>
-                                        )}
-                                    </PublishPoiMeta>
-                                </PublishPoiItem>
-                            ))}
+                            {filteredPublishPoiRows.length > 0 ? (
+                                filteredPublishPoiRows.map((poi) => (
+                                    <PublishPoiItem
+                                        key={poi.id}
+                                        type="button"
+                                        $active={activePublishPoi?.id === poi.id}
+                                        onClick={() => onSelectPoi(poi.id)}
+                                    >
+                                        <PublishPoiItemTop>
+                                            <strong>{poi.name || '이름 없는 POI'}</strong>
+                                            <PublishStatusBadge $status={poi.reviewStatus}>
+                                                {getPublishPoiStatusLabel(poi.reviewStatus)}
+                                            </PublishStatusBadge>
+                                        </PublishPoiItemTop>
+                                        <PublishPoiMeta>
+                                            <span>{poi.floorName || '-'} · {poi.code || '코드 없음'}</span>
+                                            <br />
+                                            {poi.reviewStatus === 'confirmed' ? (
+                                                <>
+                                                    <span>{poi.mappedPlace.name || '매핑 장소명 없음'}</span>
+                                                    <br />
+                                                    <span>{poi.mappedPlace.address || `외부 ID: ${poi.mappedPlace.externalApiId || '-'}`}</span>
+                                                </>
+                                            ) : poi.reviewStatus === 'excluded' ? (
+                                                <span>외부 매핑 제외 처리됨</span>
+                                            ) : (
+                                                <span>추천 후보를 확인해 주세요</span>
+                                            )}
+                                        </PublishPoiMeta>
+                                    </PublishPoiItem>
+                                ))
+                            ) : (
+                                <PublishHelpText>검색 조건에 맞는 POI가 없습니다.</PublishHelpText>
+                            )}
                         </PublishPoiList>
                     </PublishReviewSidebar>
 

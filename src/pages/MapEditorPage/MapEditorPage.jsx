@@ -170,7 +170,7 @@ export default function MapEditorPage() {
                 name: floor.name || (floor.level < 0 ? `B${Math.abs(floor.level)}층` : `${floor.level}층`),
             }))
             .filter((floor) => Boolean(floor.id))
-            .sort((a, b) => b.level - a.level)
+            .sort((a, b) => a.level - b.level)
     }, [location.state])
     const {
         campusGates,
@@ -679,12 +679,26 @@ export default function MapEditorPage() {
         if (!selectedEntity) return
 
         setLocalEdits((current) => {
+            const nextState = { ...current }
             const nextGroup = { ...(current[selectedEntity.type] || {}) }
             delete nextGroup[selectedEntity.id]
-            return {
-                ...current,
-                [selectedEntity.type]: nextGroup,
+            nextState[selectedEntity.type] = nextGroup
+
+            if (selectedEntity.type === 'node') {
+                const connectedEdgeIds = editedData.edges
+                    .filter((edge) => edge.fromNodeId === selectedEntity.id || edge.toNodeId === selectedEntity.id)
+                    .map((edge) => edge.id)
+
+                if (connectedEdgeIds.length > 0) {
+                    const nextEdgeGroup = { ...(current.edge || {}) }
+                    connectedEdgeIds.forEach((edgeId) => {
+                        delete nextEdgeGroup[edgeId]
+                    })
+                    nextState.edge = nextEdgeGroup
+                }
             }
+
+            return nextState
         })
     }
 
