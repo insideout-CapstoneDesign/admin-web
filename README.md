@@ -6,12 +6,44 @@
 
 ---
 
+## 👥 팀원 소개 (Contributors)
+
+> **Insideout 프로젝트를 이끈 양양양말을 소개합니다.**
+
+
+| **차승은** | **이민지** | **김민준** | **김세현** |
+| :---: | :---: | :---: | :---: |
+| [<img src="https://github.com/user-attachments/assets/35081664-ee95-49bf-9bbf-0340df69f54b" height="180" width="130" style="border-radius: 8px;"><br/>](https://github.com/cktmddms) | [<img src="https://github.com/user-attachments/assets/8d75a543-b6ef-4a57-86c2-e06d93e9376d" height="180" width="130" style="border-radius: 8px;"><br/>](https://github.com/thisminji) | [<img src="https://github.com/user-attachments/assets/d6335e5f-31a8-4ab6-9432-1269227ae012" height="180" width="130" style="border-radius: 8px;"><br/>](https://github.com/minjune0) | [<img src="https://github.com/user-attachments/assets/40120ba5-e3c7-4048-9d54-cdfa837f7a6d" height="180" width="130" style="border-radius: 8px;"><br/>](https://github.com/sekong11) |
+| 🔹 **Hybrid Navigation** <br> <sub>사용자 웹 - BE, FE</sub> | 🔹 **Auth, Search, Infra** <br> <sub>사용자 웹 - BE, FE</sub> | 🔹 **AI Map Builder** <br> <sub>관리자 웹 - AI, FE</sub> | 🔹 **Map Editor** <br> <sub>관리자 웹 - BE, FE</sub> |
+
+---
+
+
 ## 🔗 프로덕션 배포 주소 (Live Demo)
 
 본 서비스는 클라우드 환경에 자동 배포되어 운영 중이며, 아래 링크를 통해 별도의 설치 없이 즉시 체험하실 수 있습니다.
 
 * **🌐 Insideout 관리자 웹 바로가기:** [https://insideout-admin-web.vercel.app](https://insideout-admin-web.vercel.app)
 
+
+
+---
+
+## 🛠️ 기술 스택 (Tech Stack)
+### Frontend Core
+<div> <img src="https://img.shields.io/badge/React%2019-20232A?style=for-the-badge&logo=react&logoColor=61DAFB"> <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white"> <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black"> <img src="https://img.shields.io/badge/React%20Router%20DOM-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white"> </div>
+
+### UI & UX
+<div> <img src="https://img.shields.io/badge/styled--components-DB7093?style=for-the-badge&logo=styled-components&logoColor=white"> <img src="https://img.shields.io/badge/Framer%20Motion-000000?style=for-the-badge&logo=framer&logoColor=white"> <img src="https://img.shields.io/badge/react--modal--sheet-111111?style=for-the-badge"> </div>
+
+### Form / Validation
+<div> <img src="https://img.shields.io/badge/react--hook--form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white"> <img src="https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white"> </div>
+
+### Map / Search / Network
+<div> <img src="https://img.shields.io/badge/Kakao%20Maps-FFCD00?style=for-the-badge&logo=kakao&logoColor=000000"> <img src="https://img.shields.io/badge/Fetch%20API-005CFF?style=for-the-badge"> </div>
+
+### Deployment
+<div> <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white"> </div>
 
 
 ---
@@ -81,23 +113,6 @@ AI가 생성한 초안 데이터를 그대로 사용하지 않고, 관리자가 
 
 <img width="3014" height="1714" alt="화면 기록 2026-06-12 오전 1 32 53" src="https://github.com/user-attachments/assets/6cd64853-844d-49dd-88da-e1607935174e" />
 
----
-
-## 🛠️ 기술 스택 (Tech Stack)
-### Frontend Core
-<div> <img src="https://img.shields.io/badge/React%2019-20232A?style=for-the-badge&logo=react&logoColor=61DAFB"> <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white"> <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black"> <img src="https://img.shields.io/badge/React%20Router%20DOM-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white"> </div>
-
-### UI & UX
-<div> <img src="https://img.shields.io/badge/styled--components-DB7093?style=for-the-badge&logo=styled-components&logoColor=white"> <img src="https://img.shields.io/badge/Framer%20Motion-000000?style=for-the-badge&logo=framer&logoColor=white"> <img src="https://img.shields.io/badge/react--modal--sheet-111111?style=for-the-badge"> </div>
-
-### Form / Validation
-<div> <img src="https://img.shields.io/badge/react--hook--form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white"> <img src="https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white"> </div>
-
-### Map / Search / Network
-<div> <img src="https://img.shields.io/badge/Kakao%20Maps-FFCD00?style=for-the-badge&logo=kakao&logoColor=000000"> <img src="https://img.shields.io/badge/Fetch%20API-005CFF?style=for-the-badge"> </div>
-
-### Deployment
-<div> <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white"> </div>
 
 ---
 
