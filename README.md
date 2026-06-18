@@ -98,7 +98,6 @@ AI가 생성한 초안 데이터를 그대로 사용하지 않고, 관리자가 
 
 ### Deployment
 <div> <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white"> </div>
-## 🛠️ 기술 스택 (Tech Stack)
 
 ---
 
